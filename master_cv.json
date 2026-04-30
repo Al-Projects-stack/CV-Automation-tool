@@ -1,0 +1,135 @@
+{
+  "personal": {
+    "name": "Al Takura Mujati",
+    "email": "almujati02@gmail.com",
+    "phone": "068 203 4485",
+    "location": "Johannesburg, Gauteng, South Africa",
+    "linkedin": "https://www.linkedin.com/in/al-mujati-494789224",
+    "github": "https://github.com/sadsaxninja",
+    "portfolio": "https://sadsaxninja.github.io"
+  },
+
+  "summary": {
+    "default": "Computer Science graduate with hands-on experience in backend development, technical support, and web systems. Currently completing a BSc Honours in Security and Network Engineering. I build reliable systems, debug production issues, and ship clean code. Open to backend, cloud, support, and security-focused roles.",
+    "backend": "Backend developer with experience building APIs, web systems, and automation tools. Comfortable with Python, C#, Java, Node.js, and SQL databases. I focus on reliability, clean code, and practical solutions that work in production.",
+    "support": "Technically strong support professional with L2/L3 experience resolving real production issues. Background in backend development gives me the ability to go deeper than surface-level fixes. Fast learner, clear communicator, calm under pressure.",
+    "cloud": "Cloud-curious backend developer with Azure exposure and a Security and Network Engineering Honours degree in progress. I understand infrastructure, deployment, and system reliability from both a development and operational angle.",
+    "security": "Security and Network Engineering Honours student with a Computer Science foundation and practical backend experience. Familiar with secure coding practices, network fundamentals, and system administration via PowerShell and Azure."
+  },
+
+  "education": [
+    {
+      "institution": "Eduvos",
+      "degree": "BSc Honours",
+      "field": "Security and Network Engineering",
+      "status": "In progress",
+      "year": "2025"
+    },
+    {
+      "institution": "Eduvos",
+      "degree": "BSc",
+      "field": "Computer Science",
+      "status": "Completed",
+      "year": "2024"
+    }
+  ],
+
+  "experience": [
+    {
+      "title": "Web Developer",
+      "company": "Sewandgrow",
+      "type": "Remote",
+      "start": "June 2025",
+      "end": "Present",
+      "bullets": [
+        "Maintain and improve a live production website supporting daily business operations",
+        "Troubleshoot and resolve technical issues across the stack",
+        "Implement feature updates and performance improvements",
+        "Manage deployments and ensure site stability"
+      ]
+    },
+    {
+      "title": "Backend Developer Intern",
+      "company": "Mary Anne Hair Salon",
+      "type": "On-site, Midrand",
+      "start": "July 2023",
+      "end": "December 2023",
+      "bullets": [
+        "Built backend systems for appointment handling and form processing",
+        "Integrated third-party tools to support small business operations",
+        "Handled database design and query optimisation for booking workflows",
+        "Delivered a working system used in daily salon operations"
+      ]
+    }
+  ],
+
+  "projects": [
+    {
+      "name": "Password Generator",
+      "description": "Cryptographically secure password generator built entirely in the browser using the Web Cryptography API. Includes strength scoring via entropy calculation, configurable character sets, and a clean UI.",
+      "tech": ["JavaScript", "HTML", "CSS", "Web Cryptography API"],
+      "tags": ["security", "frontend", "tools"],
+      "link": "https://github.com/sadsaxninja/Password-generator.git"
+    },
+    {
+      "name": "GitHub Stats Dashboard",
+      "description": "Live dashboard that fetches any GitHub user's public data via the GitHub REST API and displays repos, languages, stars, forks, and follower stats in a clean interface.",
+      "tech": ["JavaScript", "HTML", "CSS", "GitHub REST API"],
+      "tags": ["api", "frontend", "tools"],
+      "link": "https://github.com/sadsaxninja/Github-Dashboard.git"
+    },
+    {
+      "name": "URL Link Shortener",
+      "description": "A service that maps long URLs to short codes, handles redirects, and tracks basic analytics. Built with a backend API and persistent storage.",
+      "tech": ["Python", "SQL", "REST API"],
+      "tags": ["backend", "api", "database"],
+      "link": "https://github.com/sadsaxninja/URL-Shortner.git"
+    },
+    {
+      "name": "Simple Chat System",
+      "description": "Backend for a customer-to-business chat system embedded in a website. Focused on message persistence, delivery, and integration with a live site.",
+      "tech": ["JavaScript", "Node.js", "SQL"],
+      "tags": ["backend", "real-time", "database"]
+    },
+   
+    {
+      "name": "Sewandgrow Website",
+      "description": "Maintained and improved a live production website for a Johannesburg-based business. Handled updates, bug fixes, and performance improvements.",
+      "tech": ["HTML", "CSS", "JavaScript", "PHP"],
+      "tags": ["production", "web", "backend"],
+      "link": "https://sewandgrow.co.za"
+    },
+    {
+      "name": "Mary Anne Hair Salon Website",
+      "description": "Built backend systems for a live salon website including appointment booking, form handling, and business tool integrations.",
+      "tech": ["PHP", "SQL", "JavaScript"],
+      "tags": ["production", "backend", "database"],
+      "link": "https://www.maryann.hair"
+    }
+  ],
+
+  "skills": {
+    "languages": ["Python", "C#", "Java", "C++", "JavaScript", "TypeScript", "PHP", "HTML", "CSS", "PowerShell", "SQL"],
+    "frameworks": ["Node.js", "React", "Django"],
+    "databases": ["MS SQL", "MySQL", "PostgreSQL"],
+    "tools": ["Git", "Docker", "Azure", "GitHub", "VS Code"],
+    "concepts": [
+      "REST API design",
+      "Database design and optimisation",
+      "Backend architecture",
+      "Technical troubleshooting",
+      "System administration",
+      "Secure coding practices",
+      "Network fundamentals",
+      "Agile development"
+    ]
+  },
+
+  "traits": [
+    "Strong debugging and troubleshooting instinct",
+    "Comfortable working remotely and independently",
+    "Adaptable across backend, support, and cloud roles",
+    "Clear written and verbal communicator",
+    "Fast learner in new environments and tech stacks"
+  ]
+}

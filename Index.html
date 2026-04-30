@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>apply.py / CV Automation Pipeline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080809;
+      --surface: #0f0f11;
+      --surface-active: #161618;
+      --border: #222225;
+      --border-focus: #00ff88;
+      --text: #e6e6e9;
+      --text-muted: #6b6b74;
+      --accent: #00ff88;
+      --accent-dim: rgba(0, 255, 136, 0.12);
+      --error: #ff4444;
+      --error-dim: rgba(255, 68, 68, 0.15);
+      --font-display: 'Unbounded', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --gutter: clamp(1.5rem, 4vw, 3rem);
+      --radius: 6px;
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      line-height: 1.5;
+      min-height: 100dvh;
+      display: flex; flex-direction: column;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Grid & Grain Overlays */
+    body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 100px 100px;
+      mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.9) 30%, transparent 80%);
+      opacity: 0.15;
+    }
+    body::after {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 900;
+      background-image: url("image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+    }
+
+    /* Custom Cursor */
+    .cursor-dot, .cursor-ring {
+      position: fixed; pointer-events: none; border-radius: 50%; z-index: 1000;
+      transform: translate(-50%, -50%);
+    }
+    .cursor-dot { width: 6px; height: 6px; background: var(--accent); }
+    .cursor-ring {
+      width: 32px; height: 32px; border: 1px solid rgba(255,255,255,0.2);
+      transition: width 0.25s var(--ease-out), height 0.25s var(--ease-out), border-color 0.25s, background 0.25s;
+    }
+    .cursor-ring.hover { width: 56px; height: 56px; border-color: var(--accent); background: var(--accent-dim); }
+
+    /* Header */
+    header {
+      padding: 1.25rem var(--gutter);
+      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(8,8,9,0.85); backdrop-filter: blur(10px); z-index: 50;
+      position: relative;
+    }
+    .brand { font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; }
+    .brand span { color: var(--accent); }
+    .status-pill {
+      display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem;
+      padding: 0.4rem 0.75rem; border-radius: 100px; border: 1px solid var(--border);
+      background: var(--surface); transition: all 0.2s;
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+    .status-pill.online .status-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    .status-pill.online { border-color: rgba(0, 255, 136, 0.3); }
+
+    /* Main Container */
+    main { position: relative; z-index: 1; flex: 1; }
+
+    /* LANDING VIEW */
+    #landing { transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out); }
+    #landing.hidden { opacity: 0; transform: translateY(-20px); pointer-events: none; position: absolute; width: 100%; }
+
+    .hero { padding: 8vh var(--gutter) 4vh; text-align: center; max-width: 900px; margin: 0 auto; }
+    .hero h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 1.05; margin-bottom: 1rem; }
+    .hero p { color: var(--text-muted); font-size: 1.1rem; max-width: 55ch; margin: 0 auto 2.5rem; }
+
+    /* Live Pipeline Visualization */
+    .pipeline-viz {
+      display: flex; justify-content: center; align-items: center; gap: 2rem;
+      margin: 0 auto 4rem; padding: 2rem 0; position: relative;
+      flex-wrap: wrap;
+    }
+    .pipeline-node {
+      display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+      background: var(--surface); border: 1px solid var(--border); padding: 1.25rem;
+      border-radius: var(--radius); min-width: 140px; position: relative; z-index: 2;
+      transition: transform 0.3s var(--ease-out), border-color 0.3s;
+    }
+    .pipeline-node:hover { transform: translateY(-4px); border-color: var(--accent); }
+    .node-icon { font-size: 1.5rem; }
+    .node-label { font-family: var(--font-display); font-weight: 600; font-size: 0.9rem; }
+    .node-desc { font-size: 0.75rem; color: var(--text-muted); text-align: center; }
+
+    .pipeline-connector {
+      height: 2px; width: 80px; background: var(--border); position: relative;
+      mask-image: linear-gradient(90deg, transparent 10%, black 10% 90%, transparent 90%);
+    }
+    .pipeline-connector::after {
+      content: ''; position: absolute; top: -3px; left: 0; width: 8px; height: 8px;
+      background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent);
+      animation: travel 2.5s infinite linear;
+    }
+    @keyframes travel { 0% { left: 0; } 100% { left: 100%; } }
+    .pipeline-connector:nth-child(4)::after { animation-delay: 1.25s; }
+
+    /* Pipeline Cards (5 Files) */
+    .cards-section { padding: 0 var(--gutter) 8vh; }
+    .section-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2rem; text-align: center; }
+    .cards-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem; max-width: 1200px; margin: 0 auto;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); padding: 1.5rem;
+      border-radius: var(--radius); position: relative; overflow: hidden;
+      transition: transform 0.3s var(--ease-out), border-color 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+    }
+    .card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+    .card::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+      background: var(--accent); transform: scaleY(0); transition: transform 0.3s var(--ease-out); transform-origin: top;
+    }
+    .card:hover::before { transform: scaleY(1); }
+    .card-tag { font-size: 0.7rem; color: var(--accent); background: var(--accent-dim); padding: 0.2rem 0.5rem; border-radius: 3px; display: inline-block; margin-bottom: 0.75rem; }
+    .card h3 { font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* CTA */
+    .cta-wrap { text-align: center; padding-bottom: 8vh; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 0.75rem;
+      background: var(--accent); color: #080809; font-family: var(--font-display); font-weight: 600;
+      padding: 1rem 2rem; border-radius: var(--radius); border: none; cursor: pointer;
+      font-size: 1rem; transition: transform 0.2s var(--ease-out), box-shadow 0.3s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--accent-dim); }
+    .btn-primary:active { transform: translateY(0); }
+
+    /* TOOL VIEW */
+    #tool {
+      opacity: 0; transform: translateY(30px); pointer-events: none;
+      transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out);
+      display: grid; grid-template-columns: 1fr 380px; gap: 1px; background: var(--border);
+      min-height: 70vh; margin-top: 2vh;
+    }
+    @media (max-width: 900px) { #tool { grid-template-columns: 1fr; } }
+    #tool.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+    .input-panel { padding: var(--gutter); display: flex; flex-direction: column; gap: 1rem; background: var(--bg); }
+    .panel-header { display: flex; justify-content: space-between; align-items: baseline; }
+    .panel-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .char-count { font-size: 0.75rem; color: var(--text-muted); }
+
+    .job-input {
+      flex: 1; resize: none; background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--font-mono); font-size: 0.95rem;
+      padding: 1rem; border-radius: var(--radius); line-height: 1.6;
+      transition: border-color 0.2s, box-shadow 0.2s; min-height: 250px;
+    }
+    .job-input:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-dim); }
+    .job-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+
+    .actions { display: flex; gap: 1rem; margin-top: auto; }
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+      padding: 0.9rem 1.5rem; border-radius: var(--radius); cursor: pointer;
+      font-family: var(--font-mono); font-size: 0.85rem; transition: all 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+    .output-panel { background: var(--surface); padding: var(--gutter); display: flex; flex-direction: column; overflow: hidden; }
+    .console {
+      flex: 1; overflow-y: auto; padding: 1rem 0; font-size: 0.8rem; line-height: 1.7;
+    }
+    .console::-webkit-scrollbar { width: 4px; }
+    .console::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .log-line { opacity: 0.7; margin-bottom: 0.25rem; display: flex; gap: 0.5rem; }
+    .log-time { color: var(--text-muted); min-width: 6ch; }
+    .log-text { color: var(--text); }
+    .log-success .log-text { color: var(--accent); }
+    .log-error .log-text { color: var(--error); }
+    .log-pending { animation: pulse 1.5s infinite; }
+    @keyframes pulse { 50% { opacity: 0.4; } }
+
+    .download-area {
+      margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);
+      display: none; flex-direction: column; gap: 0.75rem;
+    }
+    .download-area.visible { display: flex; }
+    .file-meta { font-size: 0.75rem; color: var(--text-muted); }
+    .file-name { font-family: var(--font-display); font-weight: 600; color: var(--text); }
+    .download-btn {
+      width: 100%; background: var(--surface-active); border: 1px solid var(--border);
+      color: var(--accent); padding: 0.7rem; border-radius: var(--radius);
+      font-family: var(--font-mono); font-size: 0.8rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s;
+    }
+    .download-btn:hover { border-color: var(--accent); background: var(--accent-dim); }
+
+    footer {
+      padding: 2rem var(--gutter); border-top: 1px solid var(--border);
+      text-align: center; font-size: 0.75rem; color: var(--text-muted);
+    }
+
+    .hidden { display: none !important; }
+    .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+      .cursor-dot, .cursor-ring { display: none; }
+      body { cursor: auto; }
+    }
+    @media (max-width: 768px) {
+      .pipeline-viz { flex-direction: column; gap: 1rem; }
+      .pipeline-connector { width: 2px; height: 40px; transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="cursor-dot" id="dot"></div>
+  <div class="cursor-ring" id="ring"></div>
+
+  <header>
+    <div class="brand">apply<span>.</span>py</div>
+    <div class="status-pill" id="api-status">
+      <div class="status-dot"></div>
+      <span class="status-text">Checking API...</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- LANDING VIEW -->
+    <div id="landing">
+      <section class="hero">
+        <h1>Stop rewriting.<br>Start <span style="color: var(--accent);">compiling.</span></h1>
+        <p>Paste a job description. Run one script. Generate two perfectly formatted Word documents. Powered by Claude. Built for velocity.</p>
+        
+        <!-- Live Pipeline Visualization -->
+        <div class="pipeline-viz">
+          <div class="pipeline-node hoverable">
+            <div class="node-icon">📄</div>
+            <div class="node-label">Input</div>
+            <div class="node-desc">Job.txt + master_cv.json</div>
+          </div>
+          <div class="pipeline-connector"></div>
+          <div class="pipeline-node hoverable">
+            <div class="node-icon"></div>
+            <div class="node-label">Claude AI</div>
+            <div class="node-desc">Tailors skills & bullets</div>
+          </div>
+          <div class="pipeline-connector"></div>
+          <div class="pipeline-node hoverable">
+            <div class="node-icon">📦</div>
+            <div class="node-label">Output</div>
+            <div class="node-desc">CV + Cover Letter (ZIP)</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cards-section">
+        <div class="section-label">The 5-File Architecture</div>
+        <div class="cards-grid">
+          <div class="card hoverable">
+            <span class="card-tag">ENTRY POINT</span>
+            <h3>apply.py</h3>
+            <p>The orchestrator. Loads inputs, calls Claude, parses JSON, and spawns formatters. Run it once per application.</p>
+          </div>
+          <div class="card hoverable">
+            <span class="card-tag">SOURCE OF TRUTH</span>
+            <h3>master_cv.json</h3>
+            <p>Your living archive. Every role, skill, and project you've ever touched. Updated as you grow.</p>
+          </div>
+          <div class="card hoverable">
+            <span class="card-tag">RAW INPUT</span>
+            <h3>job.txt</h3>
+            <p>No formatting. No markdown. Just paste the job description, save, and execute.</p>
+          </div>
+          <div class="card hoverable">
+            <span class="card-tag">CV FORMATTER</span>
+            <h3>format_cv.js</h3>
+            <p>Produces structured Word docs. Right-aligned dates, linked projects, clean skill sections. ATS-optimized.</p>
+          </div>
+          <div class="card hoverable">
+            <span class="card-tag">LETTER FORMATTER</span>
+            <h3>format_cover_letter.js</h3>
+            <p>Headers, dates, greetings, paragraphs, sign-offs. Clean typography. Zero manual formatting.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="cta-wrap">
+        <button class="btn-primary hoverable" id="get-started-btn">
+          Get Started <span style="opacity: 0.7;">→</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TOOL VIEW -->
+    <section id="tool">
+      <div class="input-panel">
+        <div class="panel-header">
+          <span class="panel-label">Job Description Input</span>
+          <span class="char-count" id="char-count">0 chars</span>
+        </div>
+        <textarea class="job-input" id="job-input" placeholder="Paste the full job description here. The engine will parse requirements, extract key skills, and map your master_cv.json against it."></textarea>
+        <div class="actions">
+          <button class="btn-primary" id="generate-btn" style="padding: 0.9rem 1.5rem;">
+            <span>▶ Run Pipeline</span>
+          </button>
+          <button class="btn-ghost hoverable" id="clear-btn">Clear</button>
+        </div>
+      </div>
+
+      <div class="output-panel">
+        <div class="panel-header">
+          <span class="panel-label">Execution Log</span>
+          <span class="panel-label" style="color: var(--accent);">● ACTIVE</span>
+        </div>
+        <div class="console" id="console" aria-live="polite"></div>
+        <div class="download-area" id="download-area">
+          <div>
+            <div class="file-meta">Output Package</div>
+            <div class="file-name" id="output-name">cv_application.zip</div>
+          </div>
+          <button class="download-btn hoverable" id="download-btn"> Download ZIP</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>CV Automation Pipeline v1.0.0 // Built for velocity</span>
+  </footer>
+
+  <script>
+    // CONFIG
+    const API_BASE = window.location.origin;
+    const ENDPOINT = `${API_BASE}/generate`;
+    const HEALTH_ENDPOINT = `${API_BASE}/health`;
+
+    // DOM
+    const landing = document.getElementById('landing');
+    const tool = document.getElementById('tool');
+    const getStartedBtn = document.getElementById('get-started-btn');
+    const jobInput = document.getElementById('job-input');
+    const charCount = document.getElementById('char-count');
+    const generateBtn = document.getElementById('generate-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const consoleEl = document.getElementById('console');
+    const downloadArea = document.getElementById('download-area');
+    const downloadBtn = document.getElementById('download-btn');
+    const outputName = document.getElementById('output-name');
+    const statusPill = document.getElementById('api-status');
+    const statusText = document.querySelector('.status-text');
+    const dot = document.getElementById('dot');
+    const ring = document.getElementById('ring');
+    const hoverables = document.querySelectorAll('.hoverable, a, button, .card');
+
+    // STATE
+    let generatedBlobUrl = null;
+    let isGenerating = false;
+
+    // CUSTOM CURSOR
+    let mouseX = 0, mouseY = 0;
+    let ringX = 0, ringY = 0;
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX; mouseY = e.clientY;
+      dot.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
+    });
+    function animateRing() {
+      ringX += (mouseX - ringX) * 0.15;
+      ringY += (mouseY - ringY) * 0.15;
+      ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+      requestAnimationFrame(animateRing);
+    }
+    animateRing();
+    hoverables.forEach(el => {
+      el.addEventListener('mouseenter', () => ring.classList.add('hover'));
+      el.addEventListener('mouseleave', () => ring.classList.remove('hover'));
+    });
+
+    // VIEW TRANSITION
+    getStartedBtn.addEventListener('click', () => {
+      landing.classList.add('hidden');
+      tool.classList.add('visible');
+      jobInput.focus();
+      log('Tool interface loaded. Ready for input.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // UTILS
+    const getTime = () => new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const log = (text, type = 'default') => {
+      const line = document.createElement('div');
+      line.className = `log-line ${type === 'success' ? 'log-success' : type === 'error' ? 'log-error' : ''}`;
+      line.innerHTML = `<span class="log-time">[${getTime()}]</span><span class="log-text ${type === 'pending' ? 'log-pending' : ''}">${text}</span>`;
+      consoleEl.appendChild(line);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    };
+    const updateCharCount = () => { charCount.textContent = `${jobInput.value.length} chars`; };
+
+    // HEALTH CHECK
+    const pingHealth = async () => {
+      try {
+        const res = await fetch(HEALTH_ENDPOINT);
+        if (res.ok) { statusPill.classList.add('online'); statusText.textContent = 'API Online'; }
+      } catch { statusPill.classList.remove('online'); statusText.textContent = 'API Offline'; }
+    };
+    pingHealth();
+    setInterval(pingHealth, 30000);
+
+    // INPUT LISTENERS
+    jobInput.addEventListener('input', updateCharCount);
+    clearBtn.addEventListener('click', () => {
+      jobInput.value = ''; updateCharCount(); consoleEl.innerHTML = '';
+      downloadArea.classList.remove('visible');
+      if (generatedBlobUrl) URL.revokeObjectURL(generatedBlobUrl);
+      log('Input cleared.');
+    });
+
+    // MAIN GENERATE LOGIC
+    const generate = async () => {
+      const jd = jobInput.value.trim();
+      if (!jd) {
+        jobInput.parentElement.classList.add('shake');
+        setTimeout(() => jobInput.parentElement.classList.remove('shake'), 400);
+        log('Error: Job description is empty.', 'error');
+        return;
+      }
+      if (isGenerating) return;
+
+      isGenerating = true;
+      generateBtn.disabled = true;
+      generateBtn.querySelector('span').textContent = '● Processing...';
+      consoleEl.innerHTML = '';
+      downloadArea.classList.remove('visible');
+
+      log('Initializing pipeline...', 'pending');
+      
+      try {
+        log(`Connecting to ${ENDPOINT}...`);
+        const startTime = Date.now();
+        const response = await fetch(ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ job_description: jd })
+        });
+
+        log(`Received response (${response.status}) in ${Date.now() - startTime}ms`);
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({ detail: 'Unknown server error' }));
+          throw new Error(err.detail || 'Failed to generate documents');
+        }
+
+        log('Parsing ZIP payload...');
+        const blob = await response.blob();
+        const sizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+        
+        log(`Documents generated successfully. (${sizeMB}MB)`);
+        
+        if (generatedBlobUrl) URL.revokeObjectURL(generatedBlobUrl);
+        generatedBlobUrl = URL.createObjectURL(blob);
+        
+        const disposition = response.headers.get('content-disposition');
+        const filename = disposition ? disposition.match(/filename="?([^"]+)"?/)?.[1] : 'cv_application.zip';
+        outputName.textContent = filename;
+        downloadArea.classList.add('visible');
+        
+        log('Ready for download.', 'success');
+      } catch (err) {
+        log(`Pipeline failed: ${err.message}`, 'error');
+        generateBtn.querySelector('span').textContent = '✖ Retry';
+        setTimeout(() => { generateBtn.querySelector('span').textContent = '▶ Run Pipeline'; }, 2000);
+      } finally {
+        isGenerating = false;
+        generateBtn.disabled = false;
+        generateBtn.querySelector('span').textContent = '▶ Run Pipeline';
+      }
+    };
+
+    generateBtn.addEventListener('click', generate);
+    
+    downloadBtn.addEventListener('click', () => {
+      if (!generatedBlobUrl) return;
+      const a = document.createElement('a');
+      a.href = generatedBlobUrl;
+      a.download = outputName.textContent;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      log(`Download initiated: ${outputName.textContent}`, 'success');
+    });
+
+    // Initial Log
+    log('System ready. Awaiting input.');
+  </script>
+</body>
+</html>
