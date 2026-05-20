@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+outputs/
+app.db
+*.db
+.git/
+node_modules/
+.claude/
