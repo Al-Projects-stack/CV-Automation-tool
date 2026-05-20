@@ -5,14 +5,15 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.datastructures import MutableHeaders
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from database import Base, engine, get_db
 from dependencies import get_current_user
@@ -27,19 +28,32 @@ Base.metadata.create_all(bind=engine)
 BASE_DIR = Path(__file__).resolve().parent
 
 
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
-        return response
+class SecurityHeadersMiddleware:
+    """Pure ASGI middleware — intercepts response.start so it never wraps or
+    buffers the response body, which avoids the BaseHTTPMiddleware bug that
+    drops Set-Cookie headers on redirect responses."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_with_security_headers(message):
+            if message["type"] == "http.response.start":
+                headers = MutableHeaders(scope=message)
+                headers["X-Content-Type-Options"] = "nosniff"
+                headers["X-Frame-Options"] = "DENY"
+                headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+            await send(message)
+
+        await self.app(scope, receive, send_with_security_headers)
 
 
 app = FastAPI(title="CV Automation API", version="2.0.0")
 
-# Middleware order: outermost first
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     SessionMiddleware,
