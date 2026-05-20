@@ -309,6 +309,8 @@
     .form-field input, .form-field textarea { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: var(--fm); font-size: .875rem; padding: .6rem .8rem; border-radius: var(--r); width: 100%; transition: border-color .15s, box-shadow .15s; resize: vertical; }
     .form-field input:focus, .form-field textarea:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-dim); }
     .form-field input::placeholder, .form-field textarea::placeholder { color: var(--text-muted); opacity: .5; }
+    .form-field input.invalid, .form-field textarea.invalid { border-color: var(--error) !important; box-shadow: 0 0 0 3px var(--error-dim) !important; }
+    .field-error { font-size: .68rem; color: var(--error); margin-top: .25rem; }
     .list-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 1rem; margin-bottom: .75rem; }
     .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .85rem; }
     .card-label { font-size: .7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
@@ -841,14 +843,79 @@
       $('projects-list').innerHTML = ''; (cv.projects||[]).forEach(p => addProjectCard(p));
     }
 
+    // ── Frontend validation ──────────────────────────────────────────────────
+    function clearValidation() {
+      document.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+      document.querySelectorAll('.field-error').forEach(el => el.remove());
+    }
+
+    function markInvalid(id, msg) {
+      const el = $(id);
+      if (!el) return;
+      el.classList.add('invalid');
+      if (!el.nextElementSibling?.classList.contains('field-error')) {
+        const err = document.createElement('div');
+        err.className = 'field-error';
+        err.textContent = msg;
+        el.parentNode.appendChild(err);
+      }
+      if (!document.querySelector('.invalid:first-of-type').__scrolled) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.__scrolled = true;
+      }
+    }
+
+    function validateCvForm() {
+      clearValidation();
+      const errors = [];
+
+      // Auto-prepend https:// on URL fields if missing scheme
+      ['p-linkedin','p-github','p-portfolio'].forEach(id => {
+        const el = $(id);
+        const v = el.value.trim();
+        if (v && !v.startsWith('http://') && !v.startsWith('https://')) {
+          el.value = 'https://' + v;
+        }
+      });
+
+      const name = $('p-name').value.trim();
+      if (!name) { markInvalid('p-name', 'Full name is required'); errors.push('name'); }
+
+      const email = $('p-email').value.trim();
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        markInvalid('p-email', 'Enter a valid email address'); errors.push('email');
+      }
+
+      ['p-linkedin','p-github','p-portfolio'].forEach(id => {
+        const v = $(id).value.trim();
+        if (v && !/^https?:\/\//.test(v)) {
+          markInvalid(id, 'Must start with https://'); errors.push(id);
+        }
+      });
+
+      return errors;
+    }
+
+    function apiErrorMsg(data) {
+      if (!data) return 'Request failed';
+      if (Array.isArray(data.detail)) return data.detail.map(e => e.msg.replace('Value error, ','')).join(' · ');
+      return data.detail || 'Request failed';
+    }
+
     async function saveCv() {
       const btn = $('save-cv-btn'); btn.disabled = true; btn.textContent = 'Saving...';
       try {
+        const errs = validateCvForm();
+        if (errs.length) { toast(`Fix the highlighted fields first.`, 'error'); return; }
         const cv = serializeCvForm();
-        if (!cv.personal.name) { toast('Add your name before saving.', 'error'); return; }
-        const res = await fetch('/cv', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cv) });
-        if (!res.ok) throw new Error((await res.json()).detail || 'Save failed');
-        state.cv = cv; toast('CV saved.', 'success');
+        const res = await fetch('/cv', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(cv),
+        });
+        if (!res.ok) throw new Error(apiErrorMsg(await res.json()));
+        state.cv = cv; clearValidation(); toast('CV saved.', 'success');
       } catch(e) { toast(e.message, 'error'); }
       finally { btn.disabled = false; btn.textContent = 'Save CV'; }
     }
@@ -863,6 +930,8 @@
     async function generate() {
       const jd = $('job-input').value.trim();
       if (!jd) { log('Error: Job description is empty.', 'error'); return; }
+      if (jd.length < 50) { log('Error: Job description is too short — paste the full JD.', 'error'); return; }
+      if (jd.length > 15000) { log('Error: Job description exceeds 15,000 characters.', 'error'); return; }
       if (isGenerating) return;
       isGenerating = true;
       const btn = $('generate-btn'); btn.disabled = true; btn.querySelector('span').textContent = '● Processing...';
@@ -871,9 +940,12 @@
       try {
         log('Connecting to /generate...');
         const start = Date.now();
-        const res = await fetch('/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ job_description: jd }) });
+        const res = await fetch('/generate', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', body: JSON.stringify({ job_description: jd }),
+        });
         log(`Received response (${res.status}) in ${Date.now()-start}ms`);
-        if (!res.ok) { const err = await res.json().catch(()=>({detail:'Unknown server error'})); throw new Error(err.detail || 'Failed'); }
+        if (!res.ok) { const d = await res.json().catch(()=>null); throw new Error(apiErrorMsg(d)); }
         log('Parsing ZIP payload...');
         const blob = await res.blob();
         log(`Documents generated. (${(blob.size/1024).toFixed(0)}KB)`, 'success');
