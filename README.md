@@ -1,4 +1,5 @@
-# apply.py — CV Generation, Automated
+# apply.py
+CV Generation, Automated
 <img width="974" height="621" alt="image" src="https://github.com/user-attachments/assets/e9880c4b-c218-439a-bb3b-4bae4740823d" />
 
 
