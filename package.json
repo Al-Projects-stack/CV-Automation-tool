@@ -1,8 +1,0 @@
-{
-  "name": "apply-py",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "docx": "^8.0.0"
-  }
-}
