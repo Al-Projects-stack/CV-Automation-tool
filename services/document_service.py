@@ -178,7 +178,7 @@ def _build_cv(tailored: dict, master_cv: dict) -> BytesIO:
         _right_tab(p, CONTENT_W)
         _run(p, exp.get("title", ""), 22, _DARK, bold=True)
         _run(p, "\t", 20, _DARK)
-        _run(p, f"{exp.get('start', '')} – {exp.get('end', '')}", 19, _LIGHT)
+        _run(p, f"{exp.get('start', '')} - {exp.get('end', '')}", 19, _LIGHT)
 
         p2 = doc.add_paragraph()
         _spacing(p2, 0, 2)
@@ -204,7 +204,7 @@ def _build_cv(tailored: dict, master_cv: dict) -> BytesIO:
             _spacing(p, 6, 1)
             _run(p, proj.get("name", ""), 21, _DARK, bold=True)
             if proj.get("link"):
-                _run(p, "  —  ", 18, _LIGHT)
+                _run(p, "  |  ", 18, _LIGHT)
                 _hyperlink(p, proj["link"], proj["link"], 18)
 
             p2 = doc.add_paragraph()
@@ -239,7 +239,7 @@ def _build_cv(tailored: dict, master_cv: dict) -> BytesIO:
         p = doc.add_paragraph()
         _spacing(p, 5, 1)
         _right_tab(p, CONTENT_W)
-        _run(p, f"{edu.get('degree', '')} — {edu.get('field', '')}", 21, _DARK, bold=True)
+        _run(p, f"{edu.get('degree', '')} - {edu.get('field', '')}", 21, _DARK, bold=True)
         _run(p, "\t", 20, _DARK)
         _run(p, edu.get("year", ""), 19, _LIGHT)
 
