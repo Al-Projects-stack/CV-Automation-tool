@@ -1,8 +1,9 @@
 services:
   - type: web
     name: apply-py
-    runtime: docker
-    dockerfilePath: ./Dockerfile
+    runtime: python
+    buildCommand: pip install -r requirements.txt && npm install docx
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
       - key: ANTHROPIC_API_KEY
