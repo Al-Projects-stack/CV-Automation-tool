@@ -1,7 +1,7 @@
 # apply.py
 CV Generation, Automated
 <img width="974" height="621" alt="image" src="https://github.com/user-attachments/assets/e9880c4b-c218-439a-bb3b-4bae4740823d" />
-
+Live on this url- https://apply-py.onrender.com/_
 
 A full-stack web app that takes any job description and generates a tailored CV and cover letter in under 60 seconds. Built with FastAPI, SQLite, Google OAuth, and the Claude API. Output is two formatted Word documents (.docx) zipped for download.
 
