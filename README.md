@@ -11,14 +11,14 @@ A full-stack web app that takes any job description and generates a tailored CV 
 
 ## Features
 
-- **Google OAuth sign-in** — per-user accounts, no passwords
-- **CV Builder** — fill in your experience, skills, education, and projects once through a clean form
-- **AI tailoring** — paste any job description; the engine classifies the role and rewrites your CV to match
-- **Smart section logic** — Projects section included automatically for dev/engineering roles, skipped for support, ops, and management
-- **Word document output** — formatted `.docx` CV and cover letter, ready to send
-- **First-time tutorial** — onboarding walkthrough on first sign-in
-- **Input validation** — frontend + backend validation with Pydantic models, length caps, email/URL format checks
-- **Security headers** — X-Content-Type-Options, X-Frame-Options, Referrer-Policy on all responses
+- **Google OAuth sign-in** per-user accounts, no passwords
+- **CV Builder** fill in your experience, skills, education, and projects once through a clean form
+- **AI tailoring** paste any job description; the engine classifies the role and rewrites your CV to match
+- **Smart section logic** Projects section included automatically for dev/engineering roles, skipped for support, ops, and management
+- **Word document output** formatted `.docx` CV and cover letter, ready to send
+- **First-time tutorial** onboarding walkthrough on first sign-in
+- **Input validation** frontend + backend validation with Pydantic models, length caps, email/URL format checks
+- **Security headers** X-Content-Type-Options, X-Frame-Options, Referrer-Policy on all responses
 
 ---
 
@@ -111,9 +111,9 @@ Open [http://localhost:8000](http://localhost:8000).
 
 ## How It Works
 
-1. **Sign in** with Google — account created automatically on first login
-2. **Build your CV** — fill in personal info, experience, skills, education, and projects via the form. Save once.
-3. **Generate** — paste any job description. The engine:
+1. **Sign in** with Google account created automatically on first login
+2. **Build your CV** fill in personal info, experience, skills, education, and projects via the form. Save once.
+3. **Generate** paste any job description. The engine:
    - Classifies the role (dev/engineering, ops, support, security, management)
    - Tailors every section of your CV to the job
    - Writes a matching cover letter
@@ -125,10 +125,10 @@ Open [http://localhost:8000](http://localhost:8000).
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| `GET` | `/` | — | Serves the frontend |
-| `GET` | `/health` | — | Health check |
-| `GET` | `/auth/google` | — | Starts Google OAuth flow |
-| `GET` | `/auth/callback` | — | OAuth callback, sets session cookie |
+| `GET` | `/` | | Serves the frontend |
+| `GET` | `/health` | | Health check |
+| `GET` | `/auth/google` | | Starts Google OAuth flow |
+| `GET` | `/auth/callback` | | OAuth callback, sets session cookie |
 | `GET` | `/auth/me` | ✓ | Returns current user info |
 | `POST` | `/auth/logout` | ✓ | Clears session cookie |
 | `GET` | `/cv` | ✓ | Returns the authenticated user's saved CV |
@@ -140,7 +140,7 @@ Open [http://localhost:8000](http://localhost:8000).
 **Request body:**
 ```json
 {
-  "job_description": "Full job description text (50–15,000 chars)"
+  "job_description": "Full job description text (5015,000 chars)"
 }
 ```
 
@@ -172,6 +172,6 @@ Open [http://localhost:8000](http://localhost:8000).
 ## Notes
 
 - `outputs/` stores generated files temporarily between generation and download. It is gitignored.
-- The Node.js formatters are called as subprocesses — Node must be installed on the host.
+- The Node.js formatters are called as subprocesses Node must be installed on the host.
 - `app.db` (SQLite) is gitignored. On Render, use a persistent disk or swap to PostgreSQL for production.
 - `SameSite=Lax` cookies work on localhost without HTTPS. For production, add `secure=True` to `set_cookie` and ensure HTTPS is enforced.
