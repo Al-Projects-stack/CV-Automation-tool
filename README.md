@@ -175,3 +175,10 @@ Open [http://localhost:8000](http://localhost:8000).
 - The Node.js formatters are called as subprocesses Node must be installed on the host.
 - `app.db` (SQLite) is gitignored. On Render, use a persistent disk or swap to PostgreSQL for production.
 - `SameSite=Lax` cookies work on localhost without HTTPS. For production, add `secure=True` to `set_cookie` and ensure HTTPS is enforced.
+
+## What I Learned
+
+- How to implement Google OAuth 2.0 end to end: the authorization code flow, state validation, and securely exchanging the code for tokens inside a FastAPI callback route
+- Calling Node.js as a Python subprocess to generate Word documents, and how to coordinate two runtimes inside a single Render deployment
+- Designing Claude API prompts that classify a job role and rewrite CV sections consistently, so the output is always structured enough to pass to the formatter
+- The difference SameSite=Lax vs Secure cookies makes for OAuth redirects between local and production environments
