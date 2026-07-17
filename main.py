@@ -99,8 +99,8 @@ def generate(
     if not request.job_description.strip():
         raise HTTPException(status_code=400, detail="job_description cannot be empty")
 
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY not set")
+    if not os.environ.get("GROQ_API_KEY"):
+        raise HTTPException(status_code=500, detail="GROQ_API_KEY not set")
 
     cv_record = db.query(CV).filter(CV.user_id == user.id).first()
     if not cv_record:
