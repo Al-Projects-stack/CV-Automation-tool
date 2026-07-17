@@ -2,23 +2,16 @@ import json
 import os
 import re
 
-import anthropic
-import httpx
+from openai import OpenAI
 
-# Compatibility patch: httpx >= 0.28 removed the 'proxies' argument.
-# The anthropic SDK (<= 0.34) still passes it when building its internal client.
-_original_httpx_client_init = httpx.Client.__init__
 
-def _patched_httpx_client_init(self, *args, **kwargs):
-    kwargs.pop("proxies", None)
-    _original_httpx_client_init(self, *args, **kwargs)
-
-httpx.Client.__init__ = _patched_httpx_client_init
+client = OpenAI(
+    api_key=os.environ.get("GROQ_API_KEY"),
+    base_url="https://api.groq.com/openai/v1",
+)
 
 
 def tailor_cv(job_description: str, master_cv: dict) -> dict:
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-
     prompt = f"""
 You are an expert resume/CV optimization AI. Your task is to analyze a target job description and generate tailored resume content that strictly aligns with the role type. Follow these steps exactly:
 
@@ -36,7 +29,7 @@ Analyze the provided job title and description. Categorize it into one of these 
 - NEVER force-fit software development, CI/CD pipelines, data automation, or coding-heavy projects into non-development roles. If a project is borderline, default to EXCLUDING it and strengthening experience bullets instead.
 
 📥 INPUT FORMAT:
-Target Job Title: {''}
+Target Job Title: {{}}
 Target Job Description: {job_description}
 My Background (optional): [Brief notes on your actual experience, tools, or certifications]
 
@@ -91,14 +84,14 @@ Conditional projects rule:
 Begin by identifying the job category, then generate the tailored resume sections accordingly.
 """
 
-
-    message = client.messages.create(
-        model="claude-opus-4-5",
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
         max_tokens=4000,
-        messages=[{"role": "user", "content": prompt}]
+        temperature=0.3,
     )
 
-    raw = message.content[0].text.strip()
+    raw = response.choices[0].message.content.strip()
     raw = re.sub(r"^```json\s*", "", raw)
     raw = re.sub(r"```$", "", raw)
     return json.loads(raw)
