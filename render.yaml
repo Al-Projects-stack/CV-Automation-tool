@@ -1,3 +1,9 @@
+databases:
+  - name: apply-py-db
+    databaseName: apply_db
+    plan: free
+    region: oregon
+
 services:
   - type: web
     name: apply-py
@@ -14,3 +20,6 @@ services:
         sync: false
       - key: SECRET_KEY
         generateValue: true
+      - fromDatabase:
+          name: apply-py-db
+          key: DATABASE_URL
