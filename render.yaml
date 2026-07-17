@@ -22,4 +22,5 @@ services:
         generateValue: true
       - fromDatabase:
           name: apply-py-db
+          property: connectionString
           key: DATABASE_URL
