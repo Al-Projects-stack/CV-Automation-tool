@@ -87,11 +87,36 @@ Begin by identifying the job category, then generate the tailored resume section
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=4000,
+        max_tokens=8000,
         temperature=0.3,
+        response_format={"type": "json_object"},
     )
 
-    raw = response.choices[0].message.content.strip()
-    raw = re.sub(r"^```json\s*", "", raw)
-    raw = re.sub(r"```$", "", raw)
-    return json.loads(raw)
+    raw = response.choices[0].message.content or ""
+    return _parse_json(raw)
+
+
+def _parse_json(raw: str) -> dict:
+    """Parse the model's response into a dict, tolerating markdown fences or
+    stray prose around the JSON object."""
+    text = raw.strip()
+
+    # Strip ```json ... ``` fences if present.
+    fenced = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
+    if fenced:
+        text = fenced.group(1).strip()
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Fall back to the first balanced-looking {...} span.
+    start, end = text.find("{"), text.rfind("}")
+    if start != -1 and end > start:
+        try:
+            return json.loads(text[start : end + 1])
+        except json.JSONDecodeError:
+            pass
+
+    raise ValueError("Model did not return valid JSON")

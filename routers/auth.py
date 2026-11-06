@@ -8,14 +8,13 @@ from jose import jwt
 from sqlalchemy.orm import Session
 
 from database import get_db
-from dependencies import ALGORITHM, SECRET_KEY, get_current_user
+from dependencies import ALGORITHM, IS_PRODUCTION, SECRET_KEY, get_current_user
 from models import User
 
 router = APIRouter(prefix="/auth")
 
-# Enabled in production (HTTPS) via env var; left off locally so login works over
-# plain HTTP on localhost.
-COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "").lower() in ("1", "true", "yes")
+# Enabled in production (HTTPS); left off locally so login works over plain HTTP.
+COOKIE_SECURE = IS_PRODUCTION
 
 oauth = OAuth()
 oauth.register(

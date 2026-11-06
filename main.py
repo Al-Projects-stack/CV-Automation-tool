@@ -16,8 +16,9 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from database import Base, engine, get_db
-from dependencies import get_current_user
+from dependencies import SECRET_KEY, get_current_user
 from models import CV, User
+from ratelimit import enforce as rate_limit
 from routers.auth import router as auth_router
 from routers.cv import router as cv_router
 from services.claude_service import tailor_cv
@@ -55,13 +56,15 @@ class SecurityHeadersMiddleware:
 app = FastAPI(title="CV Automation API", version="2.0.0")
 
 app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=os.environ.get("SECRET_KEY", "dev-secret-change-in-production"),
-)
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+
+# Same-origin by default. Set ALLOWED_ORIGINS (comma-separated) to allow
+# cross-origin credentialed requests — never "*", which browsers reject
+# alongside allow_credentials=True.
+_origins = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten to your domain when deployed
+    allow_origins=_origins or ["http://localhost:8000", "http://127.0.0.1:8000"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
@@ -96,6 +99,8 @@ def generate(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    rate_limit(f"generate:{user.id}")
+
     if not request.job_description.strip():
         raise HTTPException(status_code=400, detail="job_description cannot be empty")
 
