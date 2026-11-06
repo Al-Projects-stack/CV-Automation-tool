@@ -7,7 +7,7 @@ load_dotenv()
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -114,15 +114,15 @@ def generate(
     try:
         tailored = tailor_cv(request.job_description, master_cv)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Claude API error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"LLM API error: {str(e)}")
 
     try:
-        zip_path = generate_documents(tailored, master_cv)
+        zip_buf, zip_name = generate_documents(tailored, master_cv)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Document generation error: {str(e)}")
 
-    return FileResponse(
-        path=str(zip_path),
+    return StreamingResponse(
+        zip_buf,
         media_type="application/zip",
-        filename=zip_path.name,
+        headers={"Content-Disposition": f'attachment; filename="{zip_name}"'},
     )

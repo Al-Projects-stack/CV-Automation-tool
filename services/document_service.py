@@ -2,16 +2,12 @@ import re
 import zipfile
 from datetime import datetime
 from io import BytesIO
-from pathlib import Path
 
 from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Pt, RGBColor, Twips
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-OUTPUTS_DIR = BASE_DIR / "outputs"
 
 _ACCENT = RGBColor(0x1A, 0x52, 0x76)
 _DARK = RGBColor(0x1C, 0x1C, 0x1C)
@@ -308,19 +304,19 @@ def _build_cover_letter(tailored: dict, master_cv: dict) -> BytesIO:
     return buf
 
 
-def generate_documents(tailored: dict, master_cv: dict) -> Path:
-    OUTPUTS_DIR.mkdir(exist_ok=True)
-
+def generate_documents(tailored: dict, master_cv: dict) -> tuple[BytesIO, str]:
+    """Build the CV and cover-letter .docx files and return an in-memory ZIP
+    together with its download filename. Nothing is written to disk."""
     role = safe_filename(tailored.get("role_title", "Role"))
     company = safe_filename(tailored.get("company", "Company"))
-
-    zip_out = OUTPUTS_DIR / f"Application_{role}_{company}.zip"
 
     cv_buf = _build_cv(tailored, master_cv)
     cl_buf = _build_cover_letter(tailored, master_cv)
 
-    with zipfile.ZipFile(zip_out, "w") as zf:
+    zip_buf = BytesIO()
+    with zipfile.ZipFile(zip_buf, "w") as zf:
         zf.writestr(f"CV_{role}_{company}.docx", cv_buf.getvalue())
         zf.writestr(f"CoverLetter_{role}_{company}.docx", cl_buf.getvalue())
+    zip_buf.seek(0)
 
-    return zip_out
+    return zip_buf, f"Application_{role}_{company}.zip"
