@@ -21,7 +21,7 @@ from models import CV, User
 from ratelimit import enforce as rate_limit
 from routers.auth import router as auth_router
 from routers.cv import router as cv_router
-from services.claude_service import tailor_cv
+from services.llm_service import tailor_cv
 from services.document_service import generate_documents
 
 Base.metadata.create_all(bind=engine)
