@@ -1,3 +1,4 @@
+import logging
 import os
 
 from fastapi import Depends, HTTPException, Request
@@ -7,8 +8,24 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import User
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
+logger = logging.getLogger("uvicorn.error")
+
 ALGORITHM = "HS256"
+_DEV_SECRET = "dev-secret-change-in-production"
+
+# A Secure-cookie deployment signals production. Shared by main.py (CORS,
+# session key) and auth.py (cookie flags) so the signal lives in one place.
+IS_PRODUCTION = os.environ.get("COOKIE_SECURE", "").lower() in ("1", "true", "yes")
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "")
+if not SECRET_KEY:
+    if IS_PRODUCTION:
+        raise RuntimeError(
+            "SECRET_KEY environment variable must be set in production "
+            "(COOKIE_SECURE is enabled). Refusing to sign tokens with a public default."
+        )
+    logger.warning("SECRET_KEY not set — using an insecure development default.")
+    SECRET_KEY = _DEV_SECRET
 
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
