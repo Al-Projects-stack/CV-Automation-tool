@@ -5,7 +5,7 @@ CV Generation, Automated
 
 Live on this url- https://apply-py.onrender.com/_
 
-A full-stack web app that takes any job description and generates a tailored CV and cover letter in under 60 seconds. Built with FastAPI, SQLite, Google OAuth, and the Claude API. Output is two formatted Word documents (.docx) zipped for download.
+A full-stack web app that takes any job description and generates a tailored CV and cover letter in under 60 seconds. Built with FastAPI, SQLite, Google OAuth, and the Groq API (Llama 3.3 70B). Output is two formatted Word documents (.docx) zipped for download.
 
 ---
 
@@ -36,11 +36,8 @@ apply.py/
     auth.py                   # Google OAuth flow, /auth/me, /auth/logout
     cv.py                     # GET /cv, PUT /cv with Pydantic validation
   services/
-    claude_service.py         # Claude API prompt + response parsing
-    document_service.py       # Node.js subprocess calls for .docx generation
-  formatters/
-    format_cv.js              # Word CV formatter (docx package)
-    format_cover_letter.js    # Word cover letter formatter
+    claude_service.py         # Groq (Llama 3.3) prompt + response parsing
+    document_service.py       # .docx generation with python-docx
   static/
     index.html                # Single-page frontend (landing + CV builder + generate)
     favicon.svg               # SVG favicon
@@ -54,9 +51,8 @@ apply.py/
 ### Prerequisites
 
 - Python 3.10+
-- Node.js (for the Word document formatters)
 - A Google Cloud project with OAuth 2.0 credentials
-- An Anthropic API key
+- A Groq API key
 
 ### 1. Install Python dependencies
 
@@ -64,13 +60,7 @@ apply.py/
 pip install -r requirements.txt
 ```
 
-### 2. Install Node dependencies
-
-```bash
-npm install docx
-```
-
-### 3. Configure environment variables
+### 2. Configure environment variables
 
 Copy `.env.example` to `.env` and fill in all values:
 
@@ -79,7 +69,7 @@ cp .env.example .env
 ```
 
 ```env
-ANTHROPIC_API_KEY=your_anthropic_key_here
+GROQ_API_KEY=your_groq_key_here
 
 GOOGLE_CLIENT_ID=your_google_client_id_here
 GOOGLE_CLIENT_SECRET=your_google_client_secret_here
@@ -88,7 +78,7 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 SECRET_KEY=change-this-to-something-random
 ```
 
-### 4. Set up Google OAuth
+### 3. Set up Google OAuth
 
 1. Go to [console.cloud.google.com](https://console.cloud.google.com)
 2. Create a project → APIs & Services → Credentials → Create OAuth 2.0 Client ID
@@ -99,7 +89,7 @@ SECRET_KEY=change-this-to-something-random
    ```
 5. Copy the client ID and secret into your `.env`
 
-### 5. Run the server
+### 4. Run the server
 
 ```bash
 uvicorn main:app --reload --port 8000
@@ -152,12 +142,12 @@ Open [http://localhost:8000](http://localhost:8000).
 
 ## Deploying to Render
 
-> Node.js is required alongside Python. Add a build step to install Node before deploying.
+> The included `render.yaml` blueprint provisions the web service and a PostgreSQL database automatically.
 
 1. Push to GitHub
 2. Create a new **Web Service** on [render.com](https://render.com)
 3. Set environment variables in the Render dashboard:
-   - `ANTHROPIC_API_KEY`
+   - `GROQ_API_KEY`
    - `GOOGLE_CLIENT_ID`
    - `GOOGLE_CLIENT_SECRET`
    - `SECRET_KEY`
@@ -171,14 +161,13 @@ Open [http://localhost:8000](http://localhost:8000).
 
 ## Notes
 
-- `outputs/` stores generated files temporarily between generation and download. It is gitignored.
-- The Node.js formatters are called as subprocesses Node must be installed on the host.
-- `app.db` (SQLite) is gitignored. On Render, use a persistent disk or swap to PostgreSQL for production.
+- Documents are generated in-memory and streamed as a ZIP no files are written to disk.
+- `app.db` (SQLite) is gitignored. On Render, the `render.yaml` blueprint provisions PostgreSQL via `DATABASE_URL`.
 - `SameSite=Lax` cookies work on localhost without HTTPS. For production, add `secure=True` to `set_cookie` and ensure HTTPS is enforced.
 
 ## What I Learned
 
 - How to implement Google OAuth 2.0 end to end: the authorization code flow, state validation, and securely exchanging the code for tokens inside a FastAPI callback route
-- Calling Node.js as a Python subprocess to generate Word documents, and how to coordinate two runtimes inside a single Render deployment
-- Designing Claude API prompts that classify a job role and rewrite CV sections consistently, so the output is always structured enough to pass to the formatter
+- Generating formatted Word documents entirely in Python with `python-docx`, including custom XML for borders, hyperlinks, and tab stops
+- Designing LLM prompts (Groq / Llama 3.3 70B) that classify a job role and rewrite CV sections consistently, so the output is always structured enough to render
 - The difference SameSite=Lax vs Secure cookies makes for OAuth redirects between local and production environments

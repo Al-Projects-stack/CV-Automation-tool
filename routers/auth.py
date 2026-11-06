@@ -13,6 +13,10 @@ from models import User
 
 router = APIRouter(prefix="/auth")
 
+# Enabled in production (HTTPS) via env var; left off locally so login works over
+# plain HTTP on localhost.
+COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "").lower() in ("1", "true", "yes")
+
 oauth = OAuth()
 oauth.register(
     name="google",
@@ -69,6 +73,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         "auth_token",
         session_token,
         httponly=True,
+        secure=COOKIE_SECURE,
         samesite="lax",
         max_age=30 * 24 * 3600,
         path="/",
@@ -89,5 +94,11 @@ def get_me(user: User = Depends(get_current_user)):
 @router.post("/logout")
 def logout():
     response = JSONResponse({"ok": True})
-    response.delete_cookie("auth_token")
+    response.delete_cookie(
+        "auth_token",
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite="lax",
+        path="/",
+    )
     return response
