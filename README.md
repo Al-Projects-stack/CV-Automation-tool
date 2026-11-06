@@ -36,7 +36,7 @@ apply.py/
     auth.py                   # Google OAuth flow, /auth/me, /auth/logout
     cv.py                     # GET /cv, PUT /cv with Pydantic validation
   services/
-    claude_service.py         # Groq (Llama 3.3) prompt + response parsing
+    llm_service.py            # Groq (Llama 3.3) prompt + response parsing
     document_service.py       # .docx generation with python-docx
   static/
     index.html                # Single-page frontend (landing + CV builder + generate)
