@@ -39,231 +39,108 @@
     /* ════════════════════════════════════════
        LANDING
     ════════════════════════════════════════ */
-    #view-login { flex: 1; display: flex; flex-direction: column; overflow-x: hidden; position: relative; }
+    #view-login { flex: 1; display: flex; flex-direction: column; }
 
-    /* Animated blobs */
-    .blob { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
-    .blob-1 { width: 700px; height: 700px; top: -250px; left: -200px; background: radial-gradient(circle, rgba(245,158,11,.13) 0%, transparent 65%); animation: drift 14s ease-in-out infinite; }
-    .blob-2 { width: 500px; height: 500px; bottom: -100px; right: -150px; background: radial-gradient(circle, rgba(234,88,12,.09) 0%, transparent 65%); animation: drift 11s ease-in-out infinite reverse; }
-    .blob-3 { width: 300px; height: 300px; top: 50%; left: 55%; background: radial-gradient(circle, rgba(245,158,11,.06) 0%, transparent 65%); animation: drift 9s ease-in-out infinite 3s; }
-    @keyframes drift { 0%,100%{transform:translate(0,0)} 33%{transform:translate(40px,-50px)} 66%{transform:translate(-30px,30px)} }
-
-    /* Grid overlay */
-    #view-login::before {
-      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background-image: linear-gradient(rgba(245,158,11,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(245,158,11,.03) 1px, transparent 1px);
-      background-size: 80px 80px;
-      mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 20%, transparent 80%);
-    }
-
-    /* Nav */
     .land-nav {
-      position: sticky; top: 0; z-index: 200;
       display: flex; align-items: center; justify-content: space-between;
       padding: 1.1rem var(--g);
-      background: rgba(9,7,10,.8); backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(37,26,12,.6);
+      border-bottom: 1px solid var(--lborder);
     }
     .land-brand { font-family: var(--fd); font-weight: 800; font-size: 1.1rem; letter-spacing: -.025em; }
     .land-brand em { color: var(--amber); font-style: normal; }
     .nav-signin {
-      display: inline-flex; align-items: center; gap: .5rem;
-      font-family: var(--fm); font-size: .78rem;
-      padding: .45rem 1.1rem; border-radius: var(--r);
-      border: 1px solid rgba(245,158,11,.3); color: var(--amber);
-      background: rgba(245,158,11,.07); text-decoration: none; transition: all .2s;
+      font-family: var(--fm); font-size: .78rem; color: var(--lt);
+      padding: .45rem 1rem; border: 1px solid var(--lborder); border-radius: var(--r);
+      text-decoration: none; transition: border-color .15s, color .15s;
     }
-    .nav-signin:hover { background: rgba(245,158,11,.15); border-color: var(--amber); }
+    .nav-signin:hover { border-color: var(--amber); color: var(--amber); }
 
-    /* Hero */
-    .land-hero {
-      position: relative; z-index: 1;
-      min-height: 90dvh;
-      display: grid; grid-template-columns: 1fr 360px;
-      gap: 5rem; align-items: center;
-      max-width: 1160px; margin: 0 auto;
-      padding: 5rem var(--g);
+    /* Hero: reads like a source file, with a line-number gutter */
+    .land-hero { max-width: 1160px; width: 100%; margin: 0 auto; padding: 5rem var(--g) 3.5rem; }
+    .src { counter-reset: ln; max-width: 920px; }
+    .ln { position: relative; padding-left: 3.4rem; counter-increment: ln; }
+    .ln::before {
+      content: counter(ln); position: absolute; left: 0; top: .45rem; width: 2rem; text-align: right;
+      font-family: var(--fm); font-size: .7rem; font-weight: 400; letter-spacing: 0; line-height: 1; color: #4a3d2c;
     }
-    @media (max-width: 860px) { .land-hero { grid-template-columns: 1fr; } .hero-visual { display: none; } }
+    .sign { font-family: var(--fm); font-weight: 400; margin-right: .45em; }
 
-    .hero-left { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
+    .prompt-line { font-size: .8rem; color: var(--lm); padding-top: .3rem; padding-bottom: .3rem; margin-bottom: 1.4rem; }
+    .prompt-line .ps { color: var(--amber); margin-right: .6rem; }
+    .prompt-line .arg { color: var(--lt); }
 
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: .55rem;
-      padding: .3rem .9rem; border-radius: 100px;
-      border: 1px solid rgba(245,158,11,.25); background: rgba(245,158,11,.07);
-      font-size: .67rem; color: var(--amber); letter-spacing: .1em; text-transform: uppercase;
-      margin-bottom: 1.75rem;
+    .h-old {
+      font-family: var(--fd); font-weight: 800; letter-spacing: -.03em;
+      font-size: clamp(1.15rem, 2.2vw, 1.8rem); line-height: 1.3;
+      padding-top: .35rem; padding-bottom: .35rem; background: rgba(255,90,90,.07); color: #7d6c6e;
     }
-    .badge-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 6px var(--amber); animation: blink 2.5s infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .h-old .sign { color: #ff6b6b; }
+    .h-old s { text-decoration-color: rgba(255,107,107,.7); text-decoration-thickness: 2px; }
 
     .hero-h1 {
       font-family: var(--fd); font-weight: 800;
-      font-size: clamp(2.8rem, 5.5vw, 5rem);
-      line-height: 1.02; letter-spacing: -.04em;
-      color: var(--lt); margin-bottom: 1.5rem;
+      font-size: clamp(2.3rem, 5vw, 4.4rem);
+      line-height: 1.06; letter-spacing: -.04em; color: var(--lt);
+      padding-top: .5rem; padding-bottom: .6rem; margin-bottom: 1.8rem;
+      background: rgba(0,255,136,.05);
     }
-    .hero-h1 .warm {
-      background: linear-gradient(120deg, var(--amber) 0%, var(--orange) 55%, #b45309 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      display: block;
-    }
+    .hero-h1 .sign { color: var(--accent); font-size: .5em; vertical-align: .35em; }
+    .hero-h1 mark { background: none; color: var(--amber); }
+    .hero-sub { font-size: .92rem; color: var(--lm); max-width: 520px; line-height: 1.8; margin-bottom: 2rem; }
+    .hero-sub, .hero-cta-wrap { padding-top: .3rem; }
 
-    .hero-sub {
-      font-size: clamp(.87rem, 1.5vw, 1rem); color: var(--lm);
-      max-width: 460px; line-height: 1.8; margin-bottom: 2.5rem;
-    }
-
-    .hero-cta-wrap { display: flex; flex-direction: column; gap: .9rem; align-items: flex-start; }
+    /* Demo section */
+    .land-demo { max-width: 1160px; width: 100%; margin: 0 auto; padding: 0 var(--g) 5rem; }
+    .demo-intro { font-size: .82rem; color: var(--lm); margin-bottom: 1rem; }
+    .hero-cta-wrap { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
     .google-btn {
-      display: inline-flex; align-items: center; gap: .8rem;
-      background: #fff; color: #1a1209;
-      font-family: var(--fm); font-size: .88rem; font-weight: 500;
-      padding: .85rem 1.75rem; border-radius: 8px; text-decoration: none;
-      border: none; cursor: pointer; transition: all .25s;
-      box-shadow: 0 4px 28px rgba(245,158,11,.22), 0 1px 4px rgba(0,0,0,.4);
+      display: inline-flex; align-items: center; gap: .75rem;
+      background: var(--lt); color: #120d06;
+      font-family: var(--fm); font-size: .86rem; font-weight: 500;
+      padding: .8rem 1.4rem; border-radius: var(--r); text-decoration: none;
+      border: 1px solid var(--lt); transition: background .15s, border-color .15s;
     }
-    .google-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(245,158,11,.32), 0 2px 8px rgba(0,0,0,.4); }
-    .google-btn:active { transform: translateY(0); }
+    .google-btn:hover { background: var(--amber); border-color: var(--amber); }
+    .hero-note { font-size: .72rem; color: var(--lm); }
 
-    .hero-note { font-size: .7rem; color: var(--lm); opacity: .75; letter-spacing: .02em; }
-
-    .hero-stats { display: flex; gap: 2rem; margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--lborder); }
-    .stat-item { display: flex; flex-direction: column; gap: .2rem; }
-    .stat-value { font-family: var(--fd); font-size: 1.3rem; font-weight: 700; color: var(--lt); letter-spacing: -.02em; }
-    .stat-label { font-size: .67rem; color: var(--lm); text-transform: uppercase; letter-spacing: .08em; }
-
-    /* Document mockups */
-    .hero-visual { position: relative; display: flex; align-items: center; justify-content: center; min-height: 380px; }
-
-    /* Paper stack */
-    .paper-stack { position: relative; width: 260px; height: 360px; flex-shrink: 0; }
-
-    /* All papers same width/height — back ones only offset vertically so edges peek below */
-    .back-paper  { position: absolute; left: 0; border-radius: 6px; width: 260px; height: 324px; }
-    .bp-3 { top: 18px; background: #c4c0b8; box-shadow: 0 2px 10px rgba(0,0,0,.22); z-index: 1; }
-    .bp-2 { top: 12px; background: #d9d5cd; box-shadow: 0 5px 18px rgba(0,0,0,.24); z-index: 2; }
-    .bp-1 { top:  6px; background: #eae7e1; box-shadow: 0 9px 28px rgba(0,0,0,.26); z-index: 3; }
-
-    .front-paper {
-      position: absolute; top: 0; left: 0; z-index: 4;
-      width: 260px; height: 324px; background: #fff; border-radius: 6px;
-      padding: 1.35rem; overflow: hidden;
-      box-shadow: 0 16px 56px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.06);
-    }
-
-    @keyframes stack-slide-off {
-      0%   { transform: translate(0,0) rotate(0deg);        opacity: 1; }
-      18%  { transform: translate(14px,-8px) rotate(3deg);  opacity: 1; }
-      100% { transform: translate(340px,-16px) rotate(10deg); opacity: 0; }
-    }
-    @keyframes stack-rise {
-      0%   { transform: translate(8px,12px) scale(.94); opacity: 0; filter: brightness(.86); }
-      32%  { opacity: 1; filter: brightness(1); }
-      70%  { transform: translate(-2px,-3px) scale(1.007); }
-      100% { transform: translate(0,0) scale(1); opacity: 1; }
-    }
-    @keyframes stack-nudge {
-      0%,100% { transform: translate(0,0); }
-      40%     { transform: translate(-3px,-5px); }
-    }
-
-    .front-paper.is-leaving  { animation: stack-slide-off .4s  cubic-bezier(.4,0,1,1)   forwards; }
-    .front-paper.is-arriving { animation: stack-rise      .52s cubic-bezier(.1,.8,.2,1) forwards; }
-    .back-paper.is-nudging   { animation: stack-nudge     .44s ease-in-out; }
-
-    /* CV content */
-    .cv-m-name { font-family: 'Arial', sans-serif; font-size: 1.05rem; font-weight: 700; color: #1a1a1a; text-align: center; }
-    .cv-m-role { font-size: .6rem; color: #1A5276; text-align: center; margin-bottom: .45rem; }
-    .cv-m-contacts { display: flex; justify-content: center; gap: .35rem; margin-bottom: .5rem; }
-    .cv-m-contact { font-size: .47rem; color: #888; }
-    .cv-m-rule { height: 2px; background: linear-gradient(to right, #1A5276, #AED6F1); margin-bottom: .5rem; border-radius: 1px; }
-    .cv-m-sh { font-size: .51rem; font-weight: 700; color: #1A5276; text-transform: uppercase; letter-spacing: .06em; margin: .45rem 0 .28rem; border-bottom: 1px solid #AED6F1; padding-bottom: .12rem; }
-    .cv-m-job { font-size: .57rem; font-weight: 700; color: #1a1a1a; margin-bottom: .08rem; }
-    .cv-m-co  { font-size: .51rem; color: #1A5276; margin-bottom: .2rem; }
-    .bar { height: 4px; border-radius: 2px; background: #e4e4e4; margin-bottom: .17rem; }
-    .bar.b1{width:100%} .bar.b2{width:83%} .bar.b3{width:66%}
-    .tag-row { display: flex; gap: .2rem; flex-wrap: wrap; margin-top: .16rem; }
-    .cv-tag { font-size: .42rem; padding: .09rem .26rem; background: #EBF5FB; color: #1A5276; border-radius: 2px; }
-
-    .doc-glow {
-      position: absolute; width: 340px; height: 340px;
-      background: radial-gradient(circle, rgba(245,158,11,.16) 0%, transparent 65%);
-      top: 50%; left: 50%; transform: translate(-50%,-50%);
-      pointer-events: none;
-    }
-
-    /* Marquee */
-    .marquee-section {
-      position: relative; z-index: 1;
-      border-top: 1px solid var(--lborder);
-      border-bottom: 1px solid var(--lborder);
-      background: rgba(17,14,8,.5);
-      padding: 1rem 0; overflow: hidden;
-    }
-    .marquee-track { display: flex; gap: 3rem; width: max-content; animation: marquee 30s linear infinite; }
-    .marquee-track:hover { animation-play-state: paused; }
-    @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
-    .marquee-item { font-size: .72rem; color: var(--lm); letter-spacing: .06em; white-space: nowrap; display: flex; align-items: center; gap: .75rem; }
-    .marquee-item::after { content: '·'; color: var(--amber); }
+    /* Diff demo */
+    .diff { background: #0d0b0e; border: 1px solid var(--lborder); border-radius: var(--r); overflow: hidden; font-size: .78rem; }
+    .diff-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem 1rem; border-bottom: 1px solid var(--lborder); color: var(--lm); font-size: .72rem; }
+    .diff-file { color: var(--lt); }
+    .diff-tabs { display: flex; flex-wrap: wrap; gap: .4rem; padding: .75rem 1rem; border-bottom: 1px solid var(--lborder); }
+    .diff-tab { font-family: var(--fm); font-size: .72rem; padding: .3rem .7rem; border-radius: 6px; border: 1px solid var(--lborder); background: transparent; color: var(--lm); cursor: pointer; transition: color .15s, border-color .15s; }
+    .diff-tab:hover { color: var(--lt); border-color: var(--lm); }
+    .diff-tab[aria-selected="true"] { color: #120d06; background: var(--amber); border-color: var(--amber); }
+    .diff-body { padding: .5rem 0 .7rem; min-height: 380px; }
+    .diff-sec { padding: .7rem 1rem .3rem 2.6rem; color: var(--lm); font-size: .66rem; text-transform: uppercase; letter-spacing: .1em; }
+    .dl { display: grid; grid-template-columns: 2.6rem 1fr; padding: .2rem 1rem .2rem 0; line-height: 1.55; color: var(--lm); }
+    .dl::before { content: ' '; text-align: center; }
+    .dl.del { background: rgba(255,90,90,.07); color: #a8999b; }
+    .dl.del::before { content: '−'; color: #ff6b6b; }
+    .dl.del span { text-decoration: line-through; text-decoration-color: rgba(255,107,107,.55); }
+    .dl.add { background: rgba(0,255,136,.06); color: var(--lt); }
+    .dl.add::before { content: '+'; color: var(--accent); }
+    .diff-foot { padding: .7rem 1rem; border-top: 1px solid var(--lborder); color: var(--lm); font-size: .7rem; line-height: 1.6; }
 
     /* How it works */
-    .land-how {
-      position: relative; z-index: 1;
-      max-width: 1100px; margin: 0 auto; padding: 7rem var(--g);
-      width: 100%;
+    .land-how { max-width: 1160px; width: 100%; margin: 0 auto; padding: 4rem var(--g) 5rem; border-top: 1px solid var(--lborder); }
+    .how-title { font-family: var(--fd); font-size: clamp(1.4rem, 2.6vw, 2rem); font-weight: 700; letter-spacing: -.03em; color: var(--lt); margin-bottom: 2rem; }
+    .how-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .how-table th { text-align: left; font-weight: 400; font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--lm); padding: 0 1.25rem .8rem 0; border-bottom: 1px solid var(--lborder); }
+    .how-table td { padding: 1.1rem 1.25rem 1.1rem 0; border-bottom: 1px solid var(--lborder); vertical-align: top; line-height: 1.7; color: var(--lm); }
+    .how-table td.n { color: var(--amber); width: 3rem; }
+    .how-table td.you { color: var(--lt); width: 40%; }
+    .how-note { margin-top: 1.75rem; font-size: .82rem; color: var(--lm); line-height: 1.8; max-width: 640px; }
+    @media (max-width: 640px) {
+      .how-table thead { display: none; }
+      .how-table, .how-table tbody, .how-table tr, .how-table td { display: block; width: auto !important; }
+      .how-table tr { padding: 1rem 0; border-bottom: 1px solid var(--lborder); }
+      .how-table td { border: none; padding: .15rem 0; }
     }
-    .how-label {
-      font-size: .68rem; text-transform: uppercase; letter-spacing: .14em; color: var(--amber);
-      margin-bottom: 1.25rem; display: flex; align-items: center; gap: .75rem;
-    }
-    .how-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(245,158,11,.3), transparent); }
-    .how-title {
-      font-family: var(--fd); font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 700;
-      letter-spacing: -.03em; color: var(--lt); margin-bottom: 4rem; max-width: 500px; line-height: 1.15;
-    }
-    .how-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; background: var(--lborder); border: 1px solid var(--lborder); border-radius: 14px; overflow: hidden; }
-    @media (max-width: 860px) { .how-steps { grid-template-columns: 1fr; } }
-    .how-step {
-      background: var(--ls); padding: 2.5rem 2rem;
-      transition: background .2s;
-      position: relative; overflow: hidden;
-    }
-    .how-step::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(to right, var(--amber), transparent);
-      opacity: 0; transition: opacity .3s;
-    }
-    .how-step:hover { background: rgba(25,18,8,.9); }
-    .how-step:hover::before { opacity: 1; }
-    .step-n {
-      font-family: var(--fd); font-size: 2.2rem; font-weight: 800; letter-spacing: -.04em;
-      background: linear-gradient(135deg, var(--amber), var(--orange));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      margin-bottom: 1.25rem; line-height: 1; opacity: .6;
-    }
-    .step-t { font-family: var(--fd); font-size: .88rem; font-weight: 600; color: var(--lt); margin-bottom: .75rem; line-height: 1.35; letter-spacing: -.015em; }
-    .step-d { font-size: .8rem; color: var(--lm); line-height: 1.8; }
 
-    /* Bottom CTA */
-    .land-cta-section {
-      position: relative; z-index: 1;
-      text-align: center; padding: 7rem var(--g);
-      border-top: 1px solid var(--lborder);
-      overflow: hidden;
-    }
-    .cta-glow {
-      position: absolute; width: 600px; height: 300px; border-radius: 50%;
-      background: radial-gradient(ellipse, rgba(245,158,11,.12) 0%, transparent 65%);
-      top: -50px; left: 50%; transform: translateX(-50%); pointer-events: none;
-    }
-    .cta-overline { font-size: .68rem; text-transform: uppercase; letter-spacing: .14em; color: var(--amber); margin-bottom: 1.5rem; }
-    .cta-title {
-      font-family: var(--fd); font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800;
-      letter-spacing: -.035em; color: var(--lt); max-width: 640px; margin: 0 auto 1rem; line-height: 1.1;
-    }
-    .cta-sub { font-size: .88rem; color: var(--lm); margin-bottom: 2.5rem; }
+    /* Footer CTA */
+    .land-foot { max-width: 1160px; width: 100%; margin: 0 auto; padding: 2.5rem var(--g) 3rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; border-top: 1px solid var(--lborder); }
+    .land-foot p { font-size: .82rem; color: var(--lm); }
 
     /* ════════════════════════════════════════
        APP SHELL
@@ -294,7 +171,7 @@
     .cv-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap; }
     .cv-page-title { font-family: var(--fd); font-size: 1rem; font-weight: 600; }
     .cv-save-btn { font-family: var(--fd); font-weight: 600; font-size: .85rem; padding: .65rem 1.4rem; border-radius: var(--r); background: var(--accent); color: #080809; border: none; cursor: pointer; transition: all .2s; }
-    .cv-save-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--accent-dim); }
+    .cv-save-btn:hover { filter: brightness(1.1); }
     .cv-save-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
     .cv-section { margin-bottom: 1.5rem; }
     .section-header { display: flex; align-items: center; justify-content: space-between; padding: .7rem 0; border-bottom: 1px solid var(--border); margin-bottom: 1rem; cursor: pointer; user-select: none; }
@@ -332,7 +209,7 @@
     .actions { display: flex; gap: 1rem; margin-top: auto; }
     .btn { font-family: var(--fd); font-weight: 600; font-size: .93rem; padding: .85rem 1.4rem; border-radius: var(--r); cursor: pointer; border: 1px solid transparent; transition: all .2s; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; }
     .btn-primary { background: var(--accent); color: #080809; }
-    .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 16px var(--accent-dim); }
+    .btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
     .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
     .btn-ghost { background: transparent; border-color: var(--border); color: var(--text-muted); }
     .btn-ghost:hover { border-color: var(--text); color: var(--text); }
@@ -360,15 +237,15 @@
     .tut-dots { display: flex; gap: .35rem; margin-bottom: 2.25rem; }
     .tut-dot { flex: 1; height: 2px; border-radius: 1px; background: var(--border); transition: background .3s; }
     .tut-dot.on { background: var(--accent); }
-    .tut-icon { font-size: 2.25rem; margin-bottom: 1rem; line-height: 1; display: block; }
+    .tut-icon { font-size: .72rem; color: var(--accent); letter-spacing: .08em; margin-bottom: .9rem; display: block; }
     .tut-h { font-family: var(--fd); font-size: 1.05rem; font-weight: 600; color: var(--text); margin-bottom: .7rem; letter-spacing: -.015em; }
     .tut-p { font-size: .83rem; color: var(--text-muted); line-height: 1.85; margin-bottom: 2.25rem; }
     .tut-footer { display: flex; align-items: center; justify-content: space-between; }
     .tut-skip { font-family: var(--fm); font-size: .72rem; color: var(--text-muted); background: none; border: none; cursor: pointer; transition: color .15s; padding: 0; }
     .tut-skip:hover { color: var(--text); }
     .tut-next { font-family: var(--fd); font-weight: 600; font-size: .83rem; padding: .65rem 1.35rem; background: var(--accent); color: #080809; border: none; border-radius: var(--r); cursor: pointer; transition: all .2s; }
-    .tut-next:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--accent-dim); }
-    .tut-section-hint { margin-top: 1rem; padding: .6rem .85rem; background: var(--surface-active); border: 1px solid var(--border); border-left: 2px solid var(--accent); border-radius: 4px; font-size: .72rem; color: var(--text-muted); }
+    .tut-next:hover { filter: brightness(1.1); }
+    .tut-section-hint { margin-top: 1rem; padding: .6rem .85rem; background: var(--surface-active); border: 1px solid var(--border); border-radius: var(--r); font-size: .72rem; color: var(--text-muted); }
     .tut-section-hint strong { color: var(--accent); font-weight: 500; }
 
     /* Toast */
@@ -386,119 +263,57 @@
 
   <!-- ══════════ LANDING ══════════ -->
   <div id="view-login" class="hidden">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
-
     <nav class="land-nav">
       <div class="land-brand">apply<em>.</em>py</div>
-      <a href="/auth/google" class="nav-signin">Sign in →</a>
+      <a href="/auth/google" class="nav-signin">Sign in</a>
     </nav>
 
-    <!-- Hero -->
-    <div class="land-hero">
-      <div class="hero-left">
-        <div class="hero-badge"><div class="badge-dot"></div>Job applications, automated</div>
-        <h1 class="hero-h1">
-          Stop sending<br>generic CVs.
-          <span class="warm">Get tailored ones.</span>
-        </h1>
-        <p class="hero-sub">Paste any job description. Get a CV and cover letter written around that exact role, formatted as Word documents and ready to send.</p>
-        <div class="hero-cta-wrap">
+    <main class="land-hero">
+      <div class="src">
+        <p class="ln prompt-line"><span class="ps">$</span>python apply.py <span class="arg">--job your-next-job.txt</span></p>
+        <p class="ln h-old" aria-hidden="true"><span class="sign">−</span><s>Stop sending generic CVs.</s></p>
+        <h1 class="ln hero-h1"><span class="sign" aria-hidden="true">+</span>A CV rewritten for <mark>every job</mark> you apply to.</h1>
+        <p class="ln hero-sub">Save your work history once. Paste a job ad and get back a CV and cover letter written for that role, as Word files.</p>
+        <div class="ln hero-cta-wrap">
           <a href="/auth/google" class="google-btn">
             <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.962L3.964 6.294C4.672 4.167 6.656 3.58 9 3.58z"/></svg>
             Continue with Google
           </a>
           <span class="hero-note">Free · Your data stays private</span>
         </div>
-        <div class="hero-stats">
-          <div class="stat-item"><div class="stat-value">&lt;60s</div><div class="stat-label">Generation time</div></div>
-          <div class="stat-item"><div class="stat-value">2 files</div><div class="stat-label">CV + Cover Letter</div></div>
-          <div class="stat-item"><div class="stat-value">.docx</div><div class="stat-label">Word format</div></div>
-        </div>
       </div>
+    </main>
 
-      <!-- Document visual: paper stack -->
-      <div class="hero-visual" aria-hidden="true">
-        <div class="doc-glow"></div>
-        <div class="paper-stack">
-          <!-- Depth layers (no content) -->
-          <div class="back-paper bp-3" id="mock-bp3"></div>
-          <div class="back-paper bp-2" id="mock-bp2"></div>
-          <div class="back-paper bp-1" id="mock-bp1"></div>
-          <!-- Front paper -->
-          <div class="front-paper" id="mock-cv-card">
-            <div class="cv-m-name" id="mock-cv-name">Amara Nwosu</div>
-            <div class="cv-m-role" id="mock-cv-role">Data Engineer</div>
-            <div class="cv-m-contacts">
-              <span class="cv-m-contact">amara@email.com</span>
-              <span class="cv-m-contact">·</span>
-              <span class="cv-m-contact">LinkedIn</span>
-              <span class="cv-m-contact">·</span>
-              <span class="cv-m-contact">GitHub</span>
-            </div>
-            <div class="cv-m-rule"></div>
-            <div class="cv-m-sh">Professional Summary</div>
-            <div class="bar b1"></div><div style="height:.18rem"></div>
-            <div class="bar b2"></div>
-            <div class="cv-m-sh">Experience</div>
-            <div class="cv-m-job" id="mock-cv-job">Senior Data Engineer</div>
-            <div class="cv-m-co" id="mock-cv-co">StreamlineAI · Remote</div>
-            <div class="bar b1"></div><div style="height:.18rem"></div>
-            <div class="bar b2"></div><div style="height:.18rem"></div>
-            <div class="bar b3"></div>
-            <div class="cv-m-sh">Skills</div>
-            <div class="tag-row" id="mock-cv-tags">
-              <span class="cv-tag">Python</span><span class="cv-tag">Spark</span><span class="cv-tag">Airflow</span><span class="cv-tag">BigQuery</span>
-            </div>
-          </div>
-        </div>
+    <section class="land-demo">
+      <p class="demo-intro">Pick a job below. Same person, same history, different CV.</p>
+      <div class="diff" aria-label="Example: one CV rewritten for different jobs">
+        <div class="diff-head"><span class="diff-file">cv.docx</span><span id="diff-target"></span></div>
+        <div class="diff-tabs" role="tablist" id="diff-tabs"></div>
+        <div class="diff-body" id="diff-body"></div>
+        <div class="diff-foot">Red is the generic CV. Green is what apply.py writes for the job you pick.</div>
       </div>
-    </div><!-- /hero -->
+    </section>
 
-    <!-- Marquee -->
-    <div class="marquee-section">
-      <div class="marquee-track">
-        <div class="marquee-item">Software Engineer</div><div class="marquee-item">Data Analyst</div><div class="marquee-item">DevOps Engineer</div><div class="marquee-item">Product Manager</div><div class="marquee-item">Cloud Architect</div><div class="marquee-item">Security Analyst</div><div class="marquee-item">Backend Developer</div><div class="marquee-item">Full Stack Engineer</div><div class="marquee-item">Systems Engineer</div><div class="marquee-item">Network Engineer</div><div class="marquee-item">IT Support Specialist</div><div class="marquee-item">Data Engineer</div>
-        <!-- Duplicate for seamless loop -->
-        <div class="marquee-item">Software Engineer</div><div class="marquee-item">Data Analyst</div><div class="marquee-item">DevOps Engineer</div><div class="marquee-item">Product Manager</div><div class="marquee-item">Cloud Architect</div><div class="marquee-item">Security Analyst</div><div class="marquee-item">Backend Developer</div><div class="marquee-item">Full Stack Engineer</div><div class="marquee-item">Systems Engineer</div><div class="marquee-item">Network Engineer</div><div class="marquee-item">IT Support Specialist</div><div class="marquee-item">Data Engineer</div>
-      </div>
-    </div>
+    <section class="land-how">
+      <h2 class="how-title">How it works</h2>
+      <table class="how-table">
+        <thead><tr><th></th><th>You</th><th>apply.py</th></tr></thead>
+        <tbody>
+          <tr><td class="n">01</td><td class="you">Fill in your CV once: roles, education, skills and projects.</td><td>Saves it to your account so you don't type it again.</td></tr>
+          <tr><td class="n">02</td><td class="you">Paste the job ad.</td><td>Works out what kind of role it is and rewrites your summary, bullet points and skills to match it.</td></tr>
+          <tr><td class="n">03</td><td class="you">Download the zip.</td><td>Gives you a CV and a cover letter as .docx files you can edit before sending.</td></tr>
+        </tbody>
+      </table>
+      <p class="how-note">Developer and engineering jobs get a projects section. For support, ops, security and management jobs it's left out, and that space goes to your work experience instead.</p>
+    </section>
 
-    <!-- How it works -->
-    <div class="land-how">
-      <div class="how-label">How it works</div>
-      <div class="how-title">Three steps.<br>One great application.</div>
-      <div class="how-steps">
-        <div class="how-step">
-          <div class="step-n">01</div>
-          <div class="step-t">Build your profile once</div>
-          <div class="step-d">Fill in your experience, education, skills, and projects through a clean form. Your background lives in your account, so you never re-enter it.</div>
-        </div>
-        <div class="how-step">
-          <div class="step-n">02</div>
-          <div class="step-t">Paste any job description</div>
-          <div class="step-d">Drop in the full JD. The engine reads the role, maps your background against it, and rewrites each section to match.</div>
-        </div>
-        <div class="how-step">
-          <div class="step-n">03</div>
-          <div class="step-t">Download and send</div>
-          <div class="step-d">You get two Word documents, a formatted CV and a tailored cover letter, zipped and ready. Open, tweak if you want, send.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bottom CTA -->
-    <div class="land-cta-section">
-      <div class="cta-glow"></div>
-      <div class="cta-overline">Ready to start?</div>
-      <div class="cta-title">Every job deserves a tailored application.</div>
-      <div class="cta-sub">Takes 30 seconds to set up. Each generation runs in under a minute.</div>
-      <a href="/auth/google" class="google-btn" style="margin: 0 auto; display: inline-flex;">
+    <footer class="land-foot">
+      <p>Free to use. Sign in with Google to start.</p>
+      <a href="/auth/google" class="google-btn">
         <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.962L3.964 6.294C4.672 4.167 6.656 3.58 9 3.58z"/></svg>
-        Get started for free
+        Continue with Google
       </a>
-    </div>
+    </footer>
 
   </div><!-- /view-login -->
 
@@ -566,15 +381,15 @@
 
     <div id="view-generate" class="hidden">
       <section class="input-panel">
-        <div class="panel-header"><span class="panel-label">Job Description Input</span><span class="char-count" id="char-count">0 chars</span></div>
-        <textarea class="job-input" id="job-input" placeholder="Paste the full job description here. The engine tailors your CV to match this specific role."></textarea>
+        <div class="panel-header"><span class="panel-label">Job description</span><span class="char-count" id="char-count">0 chars</span></div>
+        <textarea class="job-input" id="job-input" placeholder="Paste the full job ad here."></textarea>
         <div class="actions">
-          <button class="btn btn-primary" id="generate-btn" onclick="generate()"><span>▶ Run Pipeline</span></button>
+          <button class="btn btn-primary" id="generate-btn" onclick="generate()"><span>Generate</span></button>
           <button class="btn btn-ghost" id="clear-btn">Clear</button>
         </div>
       </section>
       <section class="output-panel">
-        <div class="panel-header"><span class="panel-label">Execution Log</span><span class="panel-label" style="color:var(--accent)">● ACTIVE</span></div>
+        <div class="panel-header"><span class="panel-label">Log</span></div>
         <div class="console" id="console" aria-live="polite"></div>
         <div class="download-area" id="download-area">
           <div><div class="file-meta">Output Package</div><div class="file-name" id="output-name">cv_application.zip</div></div>
@@ -602,82 +417,98 @@
   <div class="toast hidden" id="toast"></div>
 
   <script>
-    // ── CV mockup rotation ──
-    const cvProfiles = [
-      { name: 'Amara Nwosu',    role: 'Data Engineer',          job: 'Senior Data Engineer',       co: 'StreamlineAI · Remote',     tags: ['Python', 'Spark', 'Airflow', 'BigQuery'] },
-      { name: 'James Kowalski', role: 'Cloud Architect',         job: 'Solutions Architect',        co: 'NovaTech · Hybrid',         tags: ['AWS', 'Terraform', 'Kubernetes', 'Go'] },
-      { name: 'Priya Sharma',   role: 'Cybersecurity Analyst',   job: 'Security Specialist',        co: 'SecureCore Ltd · On-site',  tags: ['SIEM', 'Python', 'IAM', 'Splunk'] },
-      { name: 'Marcus Chen',    role: 'DevOps Engineer',          job: 'Platform Engineer',          co: 'Deployify · Remote',        tags: ['Docker', 'Helm', 'CI/CD', 'Linux'] },
-      { name: 'Leila Okafor',   role: 'Full Stack Developer',    job: 'Software Engineer II',       co: 'BuildFast Inc · Remote',    tags: ['React', 'Node.js', 'TypeScript', 'MongoDB'] },
-      { name: 'Zara Mitchell',  role: 'ML Engineer',             job: 'Machine Learning Engineer',  co: 'Synapse AI · Remote',       tags: ['PyTorch', 'Python', 'MLflow', 'Kubernetes'] },
-      { name: 'Carlos Reyes',   role: 'Network Engineer',         job: 'Senior Network Engineer',    co: 'NetBridge Corp · On-site',  tags: ['Cisco', 'BGP', 'Firewalls', 'SD-WAN'] },
-      { name: 'Aisha Patel',    role: 'Backend Engineer',         job: 'Backend Developer',          co: 'Momentum Labs · Hybrid',    tags: ['Python', 'FastAPI', 'Redis', 'PostgreSQL'] },
-      { name: 'Tom Vance',      role: 'IT Support Engineer',      job: 'L2 Support Specialist',      co: 'GlobalHelp · On-site',      tags: ['Active Directory', 'Azure', 'ITIL', 'PowerShell'] },
-      { name: 'Sofia Andrade',  role: 'Data Analyst',             job: 'Business Intelligence Analyst', co: 'Insightful Co · Remote', tags: ['SQL', 'Power BI', 'Excel', 'Python'] },
+    // ── Landing: tailored-CV diff demo ──
+    // One generic CV (the "before"), rewritten per job. A missing section key
+    // means "unchanged"; an empty array means the section is dropped.
+    const GENERIC_CV = {
+      summary:    ['Motivated graduate with a passion for technology.'],
+      experience: ['Responsible for reporting tasks. Made the nightly report faster.',
+                   'Worked on the internal dashboard.',
+                   'Helped staff with IT problems at a school.'],
+      projects:   ['Personal website built with React.'],
+      skills:     ['Python, SQL, React, Windows, teamwork'],
+    };
+
+    const DEMO_JOBS = [
+      { tab: 'Data Engineer', target: 'Data Engineer, logistics',
+        summary:    ['Developer with two years of Python and SQL work on reporting pipelines for a logistics company.'],
+        experience: ['Rewrote the nightly reporting pipeline in Python and SQL, cutting its run time from 3 hours to 40 minutes.',
+                     'Supplied the data behind the operations dashboard from the same pipeline.',
+                     'Supported 200 staff on a school IT help desk.'],
+        skills:     ['Python, SQL, data pipelines, reporting'] },
+      { tab: 'IT Support', target: 'IT Support Specialist, schools',
+        summary:    ['IT support technician with a year on a school help desk for 200 staff, plus two years of scripting in Python.'],
+        experience: ['Kept the nightly reporting job running and cut its run time from 3 hours to 40 minutes.',
+                     'Fixed and maintained the internal dashboard used by the operations team.',
+                     'Ran first-line support for 200 school staff: Windows laptops, printers and Microsoft 365 accounts.'],
+        projects:   [],
+        skills:     ['Windows, Microsoft 365, help desk ticketing, Python'] },
+      { tab: 'Frontend Developer', target: 'Frontend Developer, SaaS',
+        summary:    ['Developer who has spent two years building internal tools, most recently a React dashboard for an operations team.'],
+        experience: ['Sped up the nightly report behind the dashboard from 3 hours to 40 minutes.',
+                     'Built and maintained pages in the React dashboard the operations team uses every day.',
+                     'Supported 200 staff on a school IT help desk.'],
+        skills:     ['React, JavaScript, HTML and CSS, Python'] },
     ];
 
-    let cvIdx = Math.floor(Math.random() * cvProfiles.length);
-    let cvRotateInterval = null;
+    const DEMO_SECTIONS = [['summary', 'Summary'], ['experience', 'Experience'], ['projects', 'Projects'], ['skills', 'Skills']];
+    let demoIdx = 0, demoTimer = null, demoBuilt = false;
 
-    function rotateCvCard() {
-      const front = $('mock-cv-card');
-      const bp1   = $('mock-bp1');
-      const bp2   = $('mock-bp2');
-      const bp3   = $('mock-bp3');
-      if (!front) return;
+    function escHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
-      // Top paper slides off, back papers nudge forward
-      front.classList.add('is-leaving');
-      [bp1, bp2, bp3].forEach(p => p && p.classList.add('is-nudging'));
-
-      setTimeout(() => {
-        // Pick next random profile
-        let next;
-        do { next = Math.floor(Math.random() * cvProfiles.length); } while (next === cvIdx);
-        cvIdx = next;
-        const p = cvProfiles[cvIdx];
-        $('mock-cv-name').textContent = p.name;
-        $('mock-cv-role').textContent = p.role;
-        $('mock-cv-job').textContent  = p.job;
-        $('mock-cv-co').textContent   = p.co;
-        $('mock-cv-tags').innerHTML   = p.tags.map(t => `<span class="cv-tag">${t}</span>`).join('');
-
-        // New paper rises from the stack
-        front.classList.remove('is-leaving');
-        [bp1, bp2, bp3].forEach(p => p && p.classList.remove('is-nudging'));
-        void front.offsetWidth; // force reflow so animation replays
-        front.classList.add('is-arriving');
-
-        setTimeout(() => front.classList.remove('is-arriving'), 540);
-      }, 400);
+    function renderDiff(i) {
+      const job = DEMO_JOBS[i];
+      const rows = [];
+      DEMO_SECTIONS.forEach(([key, label]) => {
+        const before = GENERIC_CV[key], after = job[key];
+        rows.push(`<div class="diff-sec">${label}</div>`);
+        if (after === undefined) {
+          before.forEach(t => rows.push(`<div class="dl"><span>${escHtml(t)}</span></div>`));
+          return;
+        }
+        const n = Math.max(before.length, after.length);
+        for (let k = 0; k < n; k++) {
+          if (before[k] != null) rows.push(`<div class="dl del"><span>${escHtml(before[k])}</span></div>`);
+          if (after[k] != null) rows.push(`<div class="dl add"><span>${escHtml(after[k])}</span></div>`);
+        }
+      });
+      $('diff-body').innerHTML = rows.join('');
+      $('diff-target').textContent = 'for: ' + job.target;
+      document.querySelectorAll('.diff-tab').forEach((b, k) => b.setAttribute('aria-selected', k === i ? 'true' : 'false'));
     }
 
+    // Names kept from the old mockup so showView() needs no changes.
     function startCvRotation() {
-      if (cvRotateInterval) return;
-      const p = cvProfiles[cvIdx];
-      if ($('mock-cv-name')) {
-        $('mock-cv-name').textContent = p.name;
-        $('mock-cv-role').textContent = p.role;
-        $('mock-cv-job').textContent  = p.job;
-        $('mock-cv-co').textContent   = p.co;
-        $('mock-cv-tags').innerHTML   = p.tags.map(t => `<span class="cv-tag">${t}</span>`).join('');
+      if (!$('diff-tabs')) return;
+      if (!demoBuilt) {
+        $('diff-tabs').innerHTML = DEMO_JOBS.map((j, k) =>
+          `<button type="button" class="diff-tab" role="tab" data-i="${k}">${escHtml(j.tab)}</button>`).join('');
+        $('diff-tabs').addEventListener('click', e => {
+          const b = e.target.closest('.diff-tab');
+          if (!b) return;
+          stopCvRotation();
+          demoIdx = Number(b.dataset.i);
+          renderDiff(demoIdx);
+        });
+        demoBuilt = true;
       }
-      cvRotateInterval = setInterval(rotateCvCard, 3200);
+      renderDiff(demoIdx);
+      if (!demoTimer) demoTimer = setInterval(() => { demoIdx = (demoIdx + 1) % DEMO_JOBS.length; renderDiff(demoIdx); }, 7000);
     }
 
     function stopCvRotation() {
-      clearInterval(cvRotateInterval);
-      cvRotateInterval = null;
+      clearInterval(demoTimer);
+      demoTimer = null;
     }
 
     // ── Tutorial ──
     const TUT_STEPS = [
-      { icon: '👋', h: "You're in. Let's get you set up.", p: "apply.py stores your full background once, then tailors your CV to any job automatically. Filling in your profile takes about 5 minutes. Let's walk through it.", hint: null },
-      { icon: '📋', h: 'Personal Info', p: 'Start with your name, email, phone number, location, and profile links (LinkedIn, GitHub, Portfolio). This appears at the top of every document you generate.', hint: 'Fill in the Personal Info section below ↓', open: 'sec-personal' },
-      { icon: '💼', h: 'Work Experience', p: 'Add each role: job title, company, employment type, dates and bullet points. One achievement per line. Be specific: "Reduced API response time by 40%" beats "Improved performance".', hint: 'Open the Experience section and add your roles ↓', open: 'sec-experience' },
-      { icon: '⚙️', h: 'Skills', p: 'List your languages, frameworks, databases, tools, and key concepts as comma-separated values. The engine matches these against each job description to decide what to highlight.', hint: 'Fill in the Skills section ↓', open: 'sec-skills' },
-      { icon: '🎓', h: 'Education & Projects', p: 'Add your qualifications under Education. Projects are optional. They\'re included for dev and engineering roles and left out for support, ops and management roles.', hint: 'Add education (and projects if relevant) ↓', open: 'sec-education' },
-      { icon: '✅', h: 'Save, then Generate', p: 'Hit Save CV at the top of this page. Once it\'s saved, go to Generate and paste a job description. Your CV and cover letter will be ready in under a minute.', hint: null },
+      { h: "You're in. Let's get you set up.", p: "apply.py stores your full background once, then tailors your CV to any job automatically. Filling in your profile takes about 5 minutes. Let's walk through it.", hint: null },
+      { h: 'Personal Info', p: 'Start with your name, email, phone number, location, and profile links (LinkedIn, GitHub, Portfolio). This appears at the top of every document you generate.', hint: 'Fill in the Personal Info section below ↓', open: 'sec-personal' },
+      { h: 'Work Experience', p: 'Add each role: job title, company, employment type, dates and bullet points. One achievement per line. Be specific: "Reduced API response time by 40%" beats "Improved performance".', hint: 'Open the Experience section and add your roles ↓', open: 'sec-experience' },
+      { h: 'Skills', p: 'List your languages, frameworks, databases, tools, and key concepts as comma-separated values. The engine matches these against each job description to decide what to highlight.', hint: 'Fill in the Skills section ↓', open: 'sec-skills' },
+      { h: 'Education & Projects', p: 'Add your qualifications under Education. Projects are optional. They\'re included for dev and engineering roles and left out for support, ops and management roles.', hint: 'Add education (and projects if relevant) ↓', open: 'sec-education' },
+      { h: 'Save, then Generate', p: 'Hit Save CV at the top of this page. Once it\'s saved, go to Generate and paste a job description. Your CV and cover letter will be ready in under a minute.', hint: null },
     ];
 
     let tutStep = 0;
@@ -709,7 +540,7 @@
       const s = TUT_STEPS[tutStep];
       $('tut-dots').innerHTML = TUT_STEPS.map((_, i) =>
         `<div class="tut-dot ${i <= tutStep ? 'on' : ''}"></div>`).join('');
-      $('tut-icon').textContent = s.icon;
+      $('tut-icon').textContent = `${String(tutStep + 1).padStart(2, '0')} / ${String(TUT_STEPS.length).padStart(2, '0')}`;
       $('tut-h').textContent    = s.h;
       $('tut-p').textContent    = s.p;
       const hint = $('tut-hint');
@@ -934,7 +765,7 @@
       if (jd.length > 15000) { log('Error: Job description exceeds 15,000 characters.', 'error'); return; }
       if (isGenerating) return;
       isGenerating = true;
-      const btn = $('generate-btn'); btn.disabled = true; btn.querySelector('span').textContent = '● Processing...';
+      const btn = $('generate-btn'); btn.disabled = true; btn.querySelector('span').textContent = 'Generating...';
       $('console').innerHTML = ''; $('download-area').classList.remove('visible');
       log('Initializing pipeline...', 'pending');
       try {
@@ -956,7 +787,7 @@
         $('download-area').classList.add('visible');
         log('Ready for download.', 'success');
       } catch(err) { log(`Pipeline failed: ${err.message}`, 'error'); }
-      finally { isGenerating = false; btn.disabled = false; btn.querySelector('span').textContent = '▶ Run Pipeline'; }
+      finally { isGenerating = false; btn.disabled = false; btn.querySelector('span').textContent = 'Generate'; }
     }
 
     $('job-input').addEventListener('input', () => { $('char-count').textContent = `${$('job-input').value.length} chars`; });
