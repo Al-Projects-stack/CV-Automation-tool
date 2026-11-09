@@ -2,13 +2,11 @@ import json
 import os
 import re
 
-from openai import OpenAI
+import anthropic
 
-
-client = OpenAI(
-    api_key=os.environ.get("GROQ_API_KEY"),
-    base_url="https://api.groq.com/openai/v1",
-)
+# Swappable without a code change: set ANTHROPIC_MODEL to claude-sonnet-5-5 or
+# claude-haiku-5-5 for lower cost/latency. Defaults to the most capable model.
+MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-opus-5-5")
 
 
 def tailor_cv(job_description: str, master_cv: dict) -> dict:
@@ -84,15 +82,14 @@ Conditional projects rule:
 Begin by identifying the job category, then generate the tailored resume sections accordingly.
 """
 
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    response = client.messages.create(
+        model=MODEL,
+        max_tokens=16000,
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=8000,
-        temperature=0.3,
-        response_format={"type": "json_object"},
     )
 
-    raw = response.choices[0].message.content or ""
+    raw = "".join(block.text for block in response.content if block.type == "text")
     return _parse_json(raw)
 
 

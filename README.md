@@ -5,7 +5,7 @@ CV Generation, Automated
 
 Live on this url- https://apply-py.onrender.com/_
 
-A full-stack web app that takes any job description and generates a tailored CV and cover letter in under 60 seconds. Built with FastAPI, SQLite, Google OAuth, and the Groq API (Llama 3.3 70B). Output is two formatted Word documents (.docx) zipped for download.
+A full-stack web app that takes any job description and generates a tailored CV and cover letter in under 60 seconds. Built with FastAPI, SQLite, Google OAuth, and the Claude API (Anthropic). Output is two formatted Word documents (.docx) zipped for download.
 
 ---
 
@@ -36,7 +36,7 @@ apply.py/
     auth.py                   # Google OAuth flow, /auth/me, /auth/logout
     cv.py                     # GET /cv, PUT /cv with Pydantic validation
   services/
-    llm_service.py            # Groq (Llama 3.3) prompt + response parsing
+    llm_service.py            # Claude (Anthropic) prompt + response parsing
     document_service.py       # .docx generation with python-docx
   static/
     index.html                # Single-page frontend (landing + CV builder + generate)
@@ -52,7 +52,7 @@ apply.py/
 
 - Python 3.10+
 - A Google Cloud project with OAuth 2.0 credentials
-- A Groq API key
+- An Anthropic API key
 
 ### 1. Install Python dependencies
 
@@ -69,7 +69,7 @@ cp .env.example .env
 ```
 
 ```env
-GROQ_API_KEY=your_groq_key_here
+ANTHROPIC_API_KEY=your_anthropic_key_here
 
 GOOGLE_CLIENT_ID=your_google_client_id_here
 GOOGLE_CLIENT_SECRET=your_google_client_secret_here
@@ -147,7 +147,7 @@ Open [http://localhost:8000](http://localhost:8000).
 1. Push to GitHub
 2. Create a new **Web Service** on [render.com](https://render.com)
 3. Set environment variables in the Render dashboard:
-   - `GROQ_API_KEY`
+   - `ANTHROPIC_API_KEY`
    - `GOOGLE_CLIENT_ID`
    - `GOOGLE_CLIENT_SECRET`
    - `SECRET_KEY`
@@ -169,5 +169,5 @@ Open [http://localhost:8000](http://localhost:8000).
 
 - How to implement Google OAuth 2.0 end to end: the authorization code flow, state validation, and securely exchanging the code for tokens inside a FastAPI callback route
 - Generating formatted Word documents entirely in Python with `python-docx`, including custom XML for borders, hyperlinks, and tab stops
-- Designing LLM prompts (Groq / Llama 3.3 70B) that classify a job role and rewrite CV sections consistently, so the output is always structured enough to render
+- Designing LLM prompts (Claude) that classify a job role and rewrite CV sections consistently, so the output is always structured enough to render
 - The difference SameSite=Lax vs Secure cookies makes for OAuth redirects between local and production environments
