@@ -55,44 +55,16 @@
     }
     .nav-signin:hover { border-color: var(--amber); color: var(--amber); }
 
-    /* Hero: reads like a source file, with a line-number gutter */
-    .land-hero { max-width: 1160px; width: 100%; margin: 0 auto; padding: 5rem var(--g) 3.5rem; }
-    .src { counter-reset: ln; max-width: 920px; }
-    .ln { position: relative; padding-left: 3.4rem; counter-increment: ln; }
-    .ln::before {
-      content: counter(ln); position: absolute; left: 0; top: .45rem; width: 2rem; text-align: right;
-      font-family: var(--fm); font-size: .7rem; font-weight: 400; letter-spacing: 0; line-height: 1; color: #4a3d2c;
-    }
-    .sign { font-family: var(--fm); font-weight: 400; margin-right: .45em; }
+    .land-main { max-width: 1180px; width: 100%; margin: 0 auto; padding: 4rem var(--g) 4.5rem; }
 
-    .prompt-line { font-size: .8rem; color: var(--lm); padding-top: .3rem; padding-bottom: .3rem; margin-bottom: 1.4rem; }
-    .prompt-line .ps { color: var(--amber); margin-right: .6rem; }
-    .prompt-line .arg { color: var(--lt); }
-
-    .h-old {
-      font-family: var(--fd); font-weight: 800; letter-spacing: -.03em;
-      font-size: clamp(1.15rem, 2.2vw, 1.8rem); line-height: 1.3;
-      padding-top: .35rem; padding-bottom: .35rem; background: rgba(255,90,90,.07); color: #7d6c6e;
-    }
-    .h-old .sign { color: #ff6b6b; }
-    .h-old s { text-decoration-color: rgba(255,107,107,.7); text-decoration-thickness: 2px; }
-
+    .land-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem 3rem; flex-wrap: wrap; margin-bottom: 3rem; }
     .hero-h1 {
       font-family: var(--fd); font-weight: 800;
-      font-size: clamp(2.3rem, 5vw, 4.4rem);
-      line-height: 1.06; letter-spacing: -.04em; color: var(--lt);
-      padding-top: .5rem; padding-bottom: .6rem; margin-bottom: 1.8rem;
-      background: rgba(0,255,136,.05);
+      font-size: clamp(2.1rem, 4.4vw, 3.6rem);
+      line-height: 1.06; letter-spacing: -.04em; color: var(--lt); max-width: 760px;
     }
-    .hero-h1 .sign { color: var(--accent); font-size: .5em; vertical-align: .35em; }
-    .hero-h1 mark { background: none; color: var(--amber); }
-    .hero-sub { font-size: .92rem; color: var(--lm); max-width: 520px; line-height: 1.8; margin-bottom: 2rem; }
-    .hero-sub, .hero-cta-wrap { padding-top: .3rem; }
-
-    /* Demo section */
-    .land-demo { max-width: 1160px; width: 100%; margin: 0 auto; padding: 0 var(--g) 5rem; }
-    .demo-intro { font-size: .82rem; color: var(--lm); margin-bottom: 1rem; }
-    .hero-cta-wrap { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+    .hero-h1 em { font-style: normal; color: var(--amber); }
+    .hero-cta-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: .6rem; }
     .google-btn {
       display: inline-flex; align-items: center; gap: .75rem;
       background: var(--lt); color: #120d06;
@@ -103,44 +75,65 @@
     .google-btn:hover { background: var(--amber); border-color: var(--amber); }
     .hero-note { font-size: .72rem; color: var(--lm); }
 
-    /* Diff demo */
-    .diff { background: #0d0b0e; border: 1px solid var(--lborder); border-radius: var(--r); overflow: hidden; font-size: .78rem; }
-    .diff-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem 1rem; border-bottom: 1px solid var(--lborder); color: var(--lm); font-size: .72rem; }
-    .diff-file { color: var(--lt); }
-    .diff-tabs { display: flex; flex-wrap: wrap; gap: .4rem; padding: .75rem 1rem; border-bottom: 1px solid var(--lborder); }
-    .diff-tab { font-family: var(--fm); font-size: .72rem; padding: .3rem .7rem; border-radius: 6px; border: 1px solid var(--lborder); background: transparent; color: var(--lm); cursor: pointer; transition: color .15s, border-color .15s; }
-    .diff-tab:hover { color: var(--lt); border-color: var(--lm); }
-    .diff-tab[aria-selected="true"] { color: #120d06; background: var(--amber); border-color: var(--amber); }
-    .diff-body { padding: .5rem 0 .7rem; min-height: 380px; }
-    .diff-sec { padding: .7rem 1rem .3rem 2.6rem; color: var(--lm); font-size: .66rem; text-transform: uppercase; letter-spacing: .1em; }
-    .dl { display: grid; grid-template-columns: 2.6rem 1fr; padding: .2rem 1rem .2rem 0; line-height: 1.55; color: var(--lm); }
-    .dl::before { content: ' '; text-align: center; }
-    .dl.del { background: rgba(255,90,90,.07); color: #a8999b; }
-    .dl.del::before { content: '−'; color: #ff6b6b; }
-    .dl.del span { text-decoration: line-through; text-decoration-color: rgba(255,107,107,.55); }
-    .dl.add { background: rgba(0,255,136,.06); color: var(--lt); }
-    .dl.add::before { content: '+'; color: var(--accent); }
-    .diff-foot { padding: .7rem 1rem; border-top: 1px solid var(--lborder); color: var(--lm); font-size: .7rem; line-height: 1.6; }
-
-    /* How it works */
-    .land-how { max-width: 1160px; width: 100%; margin: 0 auto; padding: 4rem var(--g) 5rem; border-top: 1px solid var(--lborder); }
-    .how-title { font-family: var(--fd); font-size: clamp(1.4rem, 2.6vw, 2rem); font-weight: 700; letter-spacing: -.03em; color: var(--lt); margin-bottom: 2rem; }
-    .how-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-    .how-table th { text-align: left; font-weight: 400; font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--lm); padding: 0 1.25rem .8rem 0; border-bottom: 1px solid var(--lborder); }
-    .how-table td { padding: 1.1rem 1.25rem 1.1rem 0; border-bottom: 1px solid var(--lborder); vertical-align: top; line-height: 1.7; color: var(--lm); }
-    .how-table td.n { color: var(--amber); width: 3rem; }
-    .how-table td.you { color: var(--lt); width: 40%; }
-    .how-note { margin-top: 1.75rem; font-size: .82rem; color: var(--lm); line-height: 1.8; max-width: 640px; }
-    @media (max-width: 640px) {
-      .how-table thead { display: none; }
-      .how-table, .how-table tbody, .how-table tr, .how-table td { display: block; width: auto !important; }
-      .how-table tr { padding: 1rem 0; border-bottom: 1px solid var(--lborder); }
-      .how-table td { border: none; padding: .15rem 0; }
+    /* Job switcher */
+    .match-tabs { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
+    .match-tab {
+      font-family: var(--fm); font-size: .75rem; padding: .4rem .9rem; border-radius: 100px;
+      border: 1px solid var(--lborder); background: transparent; color: var(--lm); cursor: pointer;
+      transition: color .15s, border-color .15s;
     }
+    .match-tab:hover { color: var(--lt); border-color: var(--lm); }
+    .match-tab[aria-selected="true"] { background: var(--lt); border-color: var(--lt); color: #120d06; }
 
-    /* Footer CTA */
-    .land-foot { max-width: 1160px; width: 100%; margin: 0 auto; padding: 2.5rem var(--g) 3rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; border-top: 1px solid var(--lborder); }
-    .land-foot p { font-size: .82rem; color: var(--lm); }
+    /* Stage: job ad, wires, CV */
+    .stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(4rem, 9vw, 8.5rem); align-items: start; }
+    .wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
+    .wire { fill: none; stroke: var(--amber); stroke-width: 1.5; opacity: .45; transition: opacity .2s, stroke-width .2s; }
+    .wire-end { fill: var(--amber); opacity: .6; transition: opacity .2s; }
+    .stage.focus .wire, .stage.focus .wire-end { opacity: .08; }
+    .stage.focus .wire.on { opacity: 1; stroke-width: 2.2; }
+    .stage.focus .wire-end.on { opacity: 1; }
+
+    .ad {
+      position: relative; z-index: 1;
+      background: var(--ls); border: 1px solid var(--lborder); border-radius: var(--r);
+      padding: 1.7rem 1.7rem 1.9rem; font-size: .84rem; line-height: 1.85; color: var(--lm);
+    }
+    .ad-kicker { font-size: .66rem; text-transform: uppercase; letter-spacing: .12em; color: var(--lm); margin-bottom: .7rem; }
+    .ad-title { font-family: var(--fd); font-size: 1.3rem; font-weight: 700; color: var(--lt); letter-spacing: -.02em; line-height: 1.2; }
+    .ad-co { font-size: .78rem; margin: .35rem 0 1.25rem; }
+    .ad p + p { margin-top: .85rem; }
+    .ad mark {
+      background: rgba(245,158,11,.12); color: var(--lt); border-bottom: 1px solid var(--amber);
+      padding: 0 .15em; border-radius: 2px; cursor: pointer; transition: background .15s, color .15s;
+    }
+    .ad mark.on { background: var(--amber); color: #120d06; }
+
+    .paper {
+      position: relative; z-index: 1;
+      background: #fbfaf7; color: #1c1c1c; border-radius: 4px;
+      padding: 2rem 2.1rem 2.3rem;
+      font-family: Arial, Helvetica, sans-serif; font-size: .8rem; line-height: 1.55;
+    }
+    .cv-name { font-size: 1.35rem; font-weight: 700; text-align: center; letter-spacing: -.01em; }
+    .cv-role { color: #1A5276; text-align: center; font-size: .82rem; margin: .1rem 0 .3rem; }
+    .cv-contact { color: #888; text-align: center; font-size: .68rem; margin-bottom: .2rem; }
+    .cv-h { font-size: .66rem; font-weight: 700; color: #1A5276; letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid #AED6F1; padding-bottom: .15rem; margin: .95rem 0 .45rem; }
+    .cv-job { font-weight: 700; margin-top: .35rem; }
+    .cv-job span { font-weight: 400; color: #1A5276; }
+    .cv-li { padding: .1rem .35rem; margin: 0 -.35rem; border-radius: 2px; transition: background .15s; }
+    .cv-li.bullet { padding-left: 1.2rem; text-indent: -.85rem; }
+    .cv-li.bullet::before { content: '•'; color: #1A5276; margin-right: .5em; }
+    .cv-li[data-m] { cursor: pointer; }
+    .cv-li.on { background: #fde3b8; }
+
+    .stage-note { margin-top: 1.2rem; font-size: .75rem; color: var(--lm); }
+
+    @media (max-width: 860px) {
+      .land-main { padding-top: 2.5rem; }
+      .stage { grid-template-columns: 1fr; gap: 1.25rem; }
+      .wires { display: none; }
+    }
 
     /* ════════════════════════════════════════
        APP SHELL
@@ -268,52 +261,27 @@
       <a href="/auth/google" class="nav-signin">Sign in</a>
     </nav>
 
-    <main class="land-hero">
-      <div class="src">
-        <p class="ln prompt-line"><span class="ps">$</span>python apply.py <span class="arg">--job your-next-job.txt</span></p>
-        <p class="ln h-old" aria-hidden="true"><span class="sign">−</span><s>Stop sending generic CVs.</s></p>
-        <h1 class="ln hero-h1"><span class="sign" aria-hidden="true">+</span>A CV rewritten for <mark>every job</mark> you apply to.</h1>
-        <p class="ln hero-sub">Save your work history once. Paste a job ad and get back a CV and cover letter written for that role, as Word files.</p>
-        <div class="ln hero-cta-wrap">
+    <main class="land-main">
+      <header class="land-head">
+        <h1 class="hero-h1">Your CV, matched line by line to <em>the job ad</em>.</h1>
+        <div class="hero-cta-wrap">
           <a href="/auth/google" class="google-btn">
             <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.962L3.964 6.294C4.672 4.167 6.656 3.58 9 3.58z"/></svg>
             Continue with Google
           </a>
           <span class="hero-note">Free · Your data stays private</span>
         </div>
+      </header>
+
+      <div class="match-tabs" id="match-tabs" role="tablist" aria-label="Example jobs"></div>
+
+      <div class="stage" id="stage">
+        <article class="ad" id="ad" aria-label="Example job ad"></article>
+        <svg class="wires" id="wires" aria-hidden="true"></svg>
+        <article class="paper" id="paper" aria-label="CV written for this ad"></article>
       </div>
+      <p class="stage-note">Hover or tap a highlighted part of the ad to see the line that answers it.</p>
     </main>
-
-    <section class="land-demo">
-      <p class="demo-intro">Pick a job below. Same person, same history, different CV.</p>
-      <div class="diff" aria-label="Example: one CV rewritten for different jobs">
-        <div class="diff-head"><span class="diff-file">cv.docx</span><span id="diff-target"></span></div>
-        <div class="diff-tabs" role="tablist" id="diff-tabs"></div>
-        <div class="diff-body" id="diff-body"></div>
-        <div class="diff-foot">Red is the generic CV. Green is what apply.py writes for the job you pick.</div>
-      </div>
-    </section>
-
-    <section class="land-how">
-      <h2 class="how-title">How it works</h2>
-      <table class="how-table">
-        <thead><tr><th></th><th>You</th><th>apply.py</th></tr></thead>
-        <tbody>
-          <tr><td class="n">01</td><td class="you">Fill in your CV once: roles, education, skills and projects.</td><td>Saves it to your account so you don't type it again.</td></tr>
-          <tr><td class="n">02</td><td class="you">Paste the job ad.</td><td>Works out what kind of role it is and rewrites your summary, bullet points and skills to match it.</td></tr>
-          <tr><td class="n">03</td><td class="you">Download the zip.</td><td>Gives you a CV and a cover letter as .docx files you can edit before sending.</td></tr>
-        </tbody>
-      </table>
-      <p class="how-note">Developer and engineering jobs get a projects section. For support, ops, security and management jobs it's left out, and that space goes to your work experience instead.</p>
-    </section>
-
-    <footer class="land-foot">
-      <p>Free to use. Sign in with Google to start.</p>
-      <a href="/auth/google" class="google-btn">
-        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.962L3.964 6.294C4.672 4.167 6.656 3.58 9 3.58z"/></svg>
-        Continue with Google
-      </a>
-    </footer>
 
   </div><!-- /view-login -->
 
@@ -417,88 +385,182 @@
   <div class="toast hidden" id="toast"></div>
 
   <script>
-    // ── Landing: tailored-CV diff demo ──
-    // One generic CV (the "before"), rewritten per job. A missing section key
-    // means "unchanged"; an empty array means the section is dropped.
-    const GENERIC_CV = {
-      summary:    ['Motivated graduate with a passion for technology.'],
-      experience: ['Responsible for reporting tasks. Made the nightly report faster.',
-                   'Worked on the internal dashboard.',
-                   'Helped staff with IT problems at a school.'],
-      projects:   ['Personal website built with React.'],
-      skills:     ['Python, SQL, React, Windows, teamwork'],
-    };
-
-    const DEMO_JOBS = [
-      { tab: 'Data Engineer', target: 'Data Engineer, logistics',
-        summary:    ['Developer with two years of Python and SQL work on reporting pipelines for a logistics company.'],
-        experience: ['Rewrote the nightly reporting pipeline in Python and SQL, cutting its run time from 3 hours to 40 minutes.',
-                     'Supplied the data behind the operations dashboard from the same pipeline.',
-                     'Supported 200 staff on a school IT help desk.'],
-        skills:     ['Python, SQL, data pipelines, reporting'] },
-      { tab: 'IT Support', target: 'IT Support Specialist, schools',
-        summary:    ['IT support technician with a year on a school help desk for 200 staff, plus two years of scripting in Python.'],
-        experience: ['Kept the nightly reporting job running and cut its run time from 3 hours to 40 minutes.',
-                     'Fixed and maintained the internal dashboard used by the operations team.',
-                     'Ran first-line support for 200 school staff: Windows laptops, printers and Microsoft 365 accounts.'],
-        projects:   [],
-        skills:     ['Windows, Microsoft 365, help desk ticketing, Python'] },
-      { tab: 'Frontend Developer', target: 'Frontend Developer, SaaS',
-        summary:    ['Developer who has spent two years building internal tools, most recently a React dashboard for an operations team.'],
-        experience: ['Sped up the nightly report behind the dashboard from 3 hours to 40 minutes.',
-                     'Built and maintained pages in the React dashboard the operations team uses every day.',
-                     'Supported 200 staff on a school IT help desk.'],
-        skills:     ['React, JavaScript, HTML and CSS, Python'] },
+    // ── Landing: job ad matched to CV ──
+    // {{n:text}} in an ad marks a requirement; the CV line with m: n answers it.
+    const MATCH_JOBS = [
+      {
+        tab: 'Data Engineer',
+        title: 'Data Engineer', co: 'Northwind Freight · Leeds, hybrid',
+        ad: [
+          'We move 40,000 parcels a day and need someone to keep the data flowing. You will own the {{1:batch pipelines}} behind our reporting, written in {{2:Python and SQL}}.',
+          'You have made a slow job fast before and can show us {{3:the numbers}}. Time with {{4:Airflow}} is a plus.',
+        ],
+        cv: { role: 'Data Engineer', blocks: [
+          ['h', 'Summary'],
+          ['p', 'Developer with two years of Python and SQL work on reporting pipelines.', 2],
+          ['h', 'Experience'],
+          ['job', 'Junior Developer', 'LogiTrack · 2023 to now'],
+          ['li', 'Rebuilt the nightly pipeline that feeds the operations reports.', 1],
+          ['li', 'Cut its run time from 3 hours to 40 minutes by partitioning the largest tables.', 3],
+          ['li', 'Scheduled and monitored the jobs in Airflow.', 4],
+          ['h', 'Skills'],
+          ['p', 'Python, SQL, Airflow, BigQuery'],
+        ] },
+      },
+      {
+        tab: 'IT Support',
+        title: 'IT Support Technician', co: 'Greenfield Academy Trust · on-site',
+        ad: [
+          'Be the person staff call when something breaks. You will run the {{1:help desk}} for about 200 teachers and office staff.',
+          'Most days that means {{2:Microsoft 365 accounts}} and {{3:Windows laptops and printers}}. Some {{4:scripting}} to automate the dull parts would help.',
+        ],
+        cv: { role: 'IT Support Technician', blocks: [
+          ['h', 'Summary'],
+          ['p', 'Support technician who ran a school help desk for 200 staff.', 1],
+          ['h', 'Experience'],
+          ['job', 'IT Technician', "St Mary's School · 2021 to 2023"],
+          ['li', 'Set up and fixed Microsoft 365 accounts for new and leaving staff.', 2],
+          ['li', 'Kept 150 Windows laptops and 12 printers working through term time.', 3],
+          ['job', 'Junior Developer', 'LogiTrack · 2023 to now'],
+          ['li', 'Wrote Python scripts that replaced a weekly manual report.', 4],
+          ['h', 'Skills'],
+          ['p', 'Windows, Microsoft 365, ticketing, Python'],
+        ] },
+      },
+      {
+        tab: 'Frontend Developer',
+        title: 'Frontend Developer', co: 'Plume · remote, UK',
+        ad: [
+          'We make booking software for small clinics. You will work on the {{1:React}} app our customers use all day.',
+          'We want someone who cares about {{2:speed}}, likes working with {{3:a designer}}, and has {{4:built something}} we can look at.',
+        ],
+        cv: { role: 'Frontend Developer', blocks: [
+          ['h', 'Summary'],
+          ['p', 'Developer who builds React interfaces for internal tools.'],
+          ['h', 'Experience'],
+          ['job', 'Junior Developer', 'LogiTrack · 2023 to now'],
+          ['li', 'Built pages in the React dashboard the operations team uses daily.', 1],
+          ['li', "Cut the dashboard's load time from 6 seconds to under 2.", 2],
+          ['li', "Turned our designer's Figma files into working screens.", 3],
+          ['h', 'Projects'],
+          ['li', 'Clinic booking demo in React and Vite, on GitHub.', 4],
+          ['h', 'Skills'],
+          ['p', 'React, JavaScript, HTML and CSS, Figma'],
+        ] },
+      },
     ];
 
-    const DEMO_SECTIONS = [['summary', 'Summary'], ['experience', 'Experience'], ['projects', 'Projects'], ['skills', 'Skills']];
-    let demoIdx = 0, demoTimer = null, demoBuilt = false;
+    let matchIdx = 0, matchTimer = null, matchBuilt = false, matchUserTook = false;
 
     function escHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
-    function renderDiff(i) {
-      const job = DEMO_JOBS[i];
-      const rows = [];
-      DEMO_SECTIONS.forEach(([key, label]) => {
-        const before = GENERIC_CV[key], after = job[key];
-        rows.push(`<div class="diff-sec">${label}</div>`);
-        if (after === undefined) {
-          before.forEach(t => rows.push(`<div class="dl"><span>${escHtml(t)}</span></div>`));
-          return;
-        }
-        const n = Math.max(before.length, after.length);
-        for (let k = 0; k < n; k++) {
-          if (before[k] != null) rows.push(`<div class="dl del"><span>${escHtml(before[k])}</span></div>`);
-          if (after[k] != null) rows.push(`<div class="dl add"><span>${escHtml(after[k])}</span></div>`);
+    function renderMatch(i) {
+      const job = MATCH_JOBS[i];
+      const adParas = job.ad.map(p =>
+        `<p>${escHtml(p).replace(/\{\{(\d+):([^}]+)\}\}/g, '<mark data-m="$1">$2</mark>')}</p>`).join('');
+      $('ad').innerHTML =
+        `<div class="ad-kicker">Job ad</div><div class="ad-title">${escHtml(job.title)}</div>` +
+        `<div class="ad-co">${escHtml(job.co)}</div>${adParas}`;
+
+      const cvRows = job.cv.blocks.map(([kind, a, b]) => {
+        const m = typeof b === 'number' ? ` data-m="${b}"` : '';
+        if (kind === 'h') return `<div class="cv-h">${escHtml(a)}</div>`;
+        if (kind === 'job') return `<div class="cv-job">${escHtml(a)} <span>· ${escHtml(b)}</span></div>`;
+        if (kind === 'li') return `<div class="cv-li bullet"${m}>${escHtml(a)}</div>`;
+        return `<div class="cv-li"${m}>${escHtml(a)}</div>`;
+      }).join('');
+      $('paper').innerHTML =
+        `<div class="cv-name">Amara Nwosu</div><div class="cv-role">${escHtml(job.cv.role)}</div>` +
+        `<div class="cv-contact">amara@email.com · Leeds · LinkedIn</div>${cvRows}`;
+
+      document.querySelectorAll('.match-tab').forEach((t, k) => t.setAttribute('aria-selected', k === i ? 'true' : 'false'));
+      setMatchFocus(null);
+      drawWires(true);
+    }
+
+    function drawWires(animate) {
+      const stage = $('stage'), svg = $('wires');
+      if (!stage || !svg || !stage.offsetWidth) return;
+      const s = stage.getBoundingClientRect(), ad = $('ad').getBoundingClientRect(), paper = $('paper').getBoundingClientRect();
+      const ns = 'http://www.w3.org/2000/svg';
+      svg.innerHTML = '';
+      $('ad').querySelectorAll('mark[data-m]').forEach(mark => {
+        const line = $('paper').querySelector(`.cv-li[data-m="${mark.dataset.m}"]`);
+        if (!line) return;
+        const mr = mark.getBoundingClientRect(), lr = line.getBoundingClientRect();
+        const x1 = ad.right - s.left, y1 = mr.top + mr.height / 2 - s.top;
+        const x2 = paper.left - s.left, y2 = lr.top + lr.height / 2 - s.top;
+        const dx = (x2 - x1) * 0.5;
+        const path = document.createElementNS(ns, 'path');
+        path.setAttribute('d', `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`);
+        path.setAttribute('class', 'wire');
+        path.dataset.m = mark.dataset.m;
+        svg.appendChild(path);
+        [[x1, y1], [x2, y2]].forEach(([cx, cy]) => {
+          const dot = document.createElementNS(ns, 'circle');
+          dot.setAttribute('cx', cx); dot.setAttribute('cy', cy); dot.setAttribute('r', 3);
+          dot.setAttribute('class', 'wire-end');
+          dot.dataset.m = mark.dataset.m;
+          svg.appendChild(dot);
+        });
+        if (animate) {
+          const len = path.getTotalLength();
+          path.style.strokeDasharray = len;
+          path.style.strokeDashoffset = len;
+          path.getBoundingClientRect();
+          path.style.transition = 'stroke-dashoffset .7s ease-out, opacity .2s, stroke-width .2s';
+          path.style.strokeDashoffset = 0;
         }
       });
-      $('diff-body').innerHTML = rows.join('');
-      $('diff-target').textContent = 'for: ' + job.target;
-      document.querySelectorAll('.diff-tab').forEach((b, k) => b.setAttribute('aria-selected', k === i ? 'true' : 'false'));
     }
+
+    function setMatchFocus(m) {
+      const stage = $('stage');
+      if (!stage) return;
+      stage.classList.toggle('focus', m != null);
+      stage.querySelectorAll('[data-m]').forEach(el => el.classList.toggle('on', m != null && el.dataset.m === m));
+    }
+
+    function takeOver() { matchUserTook = true; stopCvRotation(); }
 
     // Names kept from the old mockup so showView() needs no changes.
     function startCvRotation() {
-      if (!$('diff-tabs')) return;
-      if (!demoBuilt) {
-        $('diff-tabs').innerHTML = DEMO_JOBS.map((j, k) =>
-          `<button type="button" class="diff-tab" role="tab" data-i="${k}">${escHtml(j.tab)}</button>`).join('');
-        $('diff-tabs').addEventListener('click', e => {
-          const b = e.target.closest('.diff-tab');
-          if (!b) return;
-          stopCvRotation();
-          demoIdx = Number(b.dataset.i);
-          renderDiff(demoIdx);
+      if (!$('stage')) return;
+      if (!matchBuilt) {
+        $('match-tabs').innerHTML = MATCH_JOBS.map((j, k) =>
+          `<button type="button" class="match-tab" role="tab" data-i="${k}">${escHtml(j.tab)}</button>`).join('');
+        $('match-tabs').addEventListener('click', e => {
+          const t = e.target.closest('.match-tab');
+          if (!t) return;
+          takeOver();
+          matchIdx = Number(t.dataset.i);
+          renderMatch(matchIdx);
         });
-        demoBuilt = true;
+        const stage = $('stage');
+        stage.addEventListener('mouseover', e => {
+          const el = e.target.closest('[data-m]');
+          if (el) { takeOver(); setMatchFocus(el.dataset.m); }
+        });
+        stage.addEventListener('mouseleave', () => setMatchFocus(null));
+        stage.addEventListener('click', e => {
+          const el = e.target.closest('[data-m]');
+          takeOver();
+          setMatchFocus(el ? el.dataset.m : null);
+        });
+        let resizeTimer;
+        window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => drawWires(false), 120); });
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => drawWires(false));
+        matchBuilt = true;
       }
-      renderDiff(demoIdx);
-      if (!demoTimer) demoTimer = setInterval(() => { demoIdx = (demoIdx + 1) % DEMO_JOBS.length; renderDiff(demoIdx); }, 7000);
+      renderMatch(matchIdx);
+      if (!matchTimer && !matchUserTook) {
+        matchTimer = setInterval(() => { matchIdx = (matchIdx + 1) % MATCH_JOBS.length; renderMatch(matchIdx); }, 8000);
+      }
     }
 
     function stopCvRotation() {
-      clearInterval(demoTimer);
-      demoTimer = null;
+      clearInterval(matchTimer);
+      matchTimer = null;
     }
 
     // ── Tutorial ──
