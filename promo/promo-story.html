@@ -34,8 +34,9 @@
   <div class="bar">
     <button id="play" type="button">Play</button>
     <button id="save" type="button">Save as video</button>
+    <button id="sound" type="button" aria-pressed="true">Sound: on</button>
     <div class="progress"><i id="prog"></i></div>
-    <span class="status" id="status">38s · 1080×1920 · vertical</span>
+    <span class="status" id="status">38s · 1080×1920 · vertical · press Play for sound</span>
   </div>
 
 <script>
@@ -585,9 +586,169 @@ function render(t) {
   sceneApply(t); sceneApplied(t); sceneInterview(t); sceneEnd(t);
 }
 
+// ── Sound effects (Web Audio, all synthesized) ──
+const MASTER_VOL = 1.5;
+let ac = null, master = null, recDest = null, noiseBuf = null, soundOn = true;
+
+function audio() {
+  if (!ac) {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    const comp = ac.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.ratio.value = 4;
+    master = ac.createGain();
+    master.gain.value = soundOn ? MASTER_VOL : 0;
+    master.connect(comp);
+    comp.connect(ac.destination);
+    recDest = ac.createMediaStreamDestination();
+    comp.connect(recDest);
+  }
+  return ac;
+}
+function noiseSrc() {
+  if (!noiseBuf) {
+    noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const s = ac.createBufferSource(); s.buffer = noiseBuf; return s;
+}
+function envelopeGain(g, at, attack, peak, decay) {
+  g.gain.setValueAtTime(.0001, at);
+  g.gain.exponentialRampToValueAtTime(peak, at + attack);
+  g.gain.exponentialRampToValueAtTime(.0001, at + attack + decay);
+}
+const SFX = {
+  click(at, vol = .2, pitch = 1) {
+    const s = noiseSrc(), f = ac.createBiquadFilter(), g = ac.createGain();
+    f.type = 'bandpass'; f.frequency.value = 3200 * pitch; f.Q.value = 1.4;
+    s.connect(f).connect(g).connect(master);
+    envelopeGain(g, at, .002, vol, .04);
+    s.start(at, Math.random() * 1.5, .06);
+  },
+  tick(at, vol = .1, freq = 2200) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'square'; o.frequency.value = freq;
+    o.connect(g).connect(master);
+    envelopeGain(g, at, .001, vol, .025);
+    o.start(at); o.stop(at + .04);
+  },
+  thud(at, vol = .4) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(170, at); o.frequency.exponentialRampToValueAtTime(55, at + .12);
+    o.connect(g).connect(master);
+    envelopeGain(g, at, .003, vol, .18);
+    o.start(at); o.stop(at + .25);
+    const s = noiseSrc(), f = ac.createBiquadFilter(), g2 = ac.createGain();
+    f.type = 'lowpass'; f.frequency.value = 1400;
+    s.connect(f).connect(g2).connect(master);
+    envelopeGain(g2, at, .002, vol * .35, .07);
+    s.start(at, Math.random(), .1);
+  },
+  whoosh(at, dur = .4, vol = .2, from = 400, to = 4000) {
+    const s = noiseSrc(), f = ac.createBiquadFilter(), g = ac.createGain();
+    f.type = 'bandpass'; f.Q.value = .9;
+    f.frequency.setValueAtTime(from, at); f.frequency.exponentialRampToValueAtTime(to, at + dur);
+    s.connect(f).connect(g).connect(master);
+    g.gain.setValueAtTime(.0001, at);
+    g.gain.exponentialRampToValueAtTime(vol, at + dur * .45);
+    g.gain.exponentialRampToValueAtTime(.0001, at + dur);
+    s.start(at, Math.random() * .5, dur + .05);
+  },
+  pop(at, vol = .25, freq = 600) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(freq, at); o.frequency.exponentialRampToValueAtTime(freq * 2.2, at + .06);
+    o.connect(g).connect(master);
+    envelopeGain(g, at, .002, vol, .09);
+    o.start(at); o.stop(at + .12);
+  },
+  note(at, freq, vol = .2, dur = .5, type = 'triangle') {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.value = freq;
+    o.connect(g).connect(master);
+    envelopeGain(g, at, .008, vol, dur);
+    o.start(at); o.stop(at + dur + .05);
+  },
+  chime(at, freqs, vol = .16) { freqs.forEach((f, i) => SFX.note(at + i * .07, f, vol, .9, 'sine')); },
+  zip(at) { for (let i = 0; i < 16; i++) SFX.click(at + i * .02, .16, .55 + i * .07); },
+};
+
+const NOTE = { C3: 130.81, G3: 196.0, C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, B5: 987.77 };
+
+// Every cue sits on the same timeline as render(t).
+function buildCues() {
+  const cues = [];
+  const at = (t, fn) => cues.push({ t, fn });
+
+  // Scene A: counter ticks, CV copies flying, rejection envelopes landing
+  for (let k = 2; k <= 40; k++) at(sentAt(k), w => SFX.tick(w, .07, 1800 + k * 12));
+  for (let k = 1; k <= 40; k += 4) at(sentAt(k) + .05, w => SFX.whoosh(w, .35, .07, 700, 3200));
+  for (let i = 0; i < 20; i++) at(5.0 + i * .1 + .6 / 2.75, w => SFX.thud(w, .26));
+  at(7.9, w => SFX.whoosh(w, .6, .12, 2400, 300));
+
+  // Feed: flick, detent ticks as cards pass, taps
+  at(9.02, w => SFX.whoosh(w, .55, .2, 300, 2600));
+  for (let px = CARD_H + CARD_GAP; px < SCROLL_END; px += CARD_H + CARD_GAP) {
+    const s = 1 - Math.pow(1 - px / SCROLL_END, 1 / 4);
+    at(9.15 + 2.35 * s, w => SFX.tick(w, .035, 1400));
+  }
+  at(11.7, w => { SFX.click(w, .3, .7); SFX.pop(w, .1, 500); });
+  at(12.05, w => SFX.whoosh(w, .45, .1, 500, 2200));
+  at(12.85, w => { SFX.click(w, .3, .7); SFX.pop(w, .1, 520); });
+
+  // Editor: typing, deleting, retyping, clock spinning
+  for (let k = 0; k < 42; k++) at(13.6 + k / 42, w => SFX.click(w, .12, .95 + Math.random() * .25));
+  for (let k = 0; k < 42; k++) at(14.8 + .5 * k / 42, w => SFX.click(w, .09, .7));
+  for (let k = 0; k < 12; k++) at(15.5 + .5 * k / 12, w => SFX.click(w, .12, .95 + Math.random() * .25));
+  for (let k = 0; k < 16; k++) at(15.25 + .6 * k / 16, w => SFX.tick(w, .05, 2600));
+
+  // Search: typing, results popping in, tap, zoom
+  for (let k = 0; k < 23; k++) at(16.4 + 1.1 * k / 23, w => SFX.click(w, .11, .95 + Math.random() * .25));
+  RESULTS.forEach((_, i) => at(17.8 + i * .16, w => SFX.pop(w, i === 4 ? .2 : .1, 480 + i * 90)));
+  at(18.9, w => { SFX.click(w, .3, .7); SFX.pop(w, .12, 560); });
+  at(19.25, w => SFX.whoosh(w, .75, .26, 300, 6000));
+
+  // apply.py: each phrase lifts, flies and lands on a rising note
+  [NOTE.C5, NOTE.D5, NOTE.E5, NOTE.G5].forEach((freq, i) => {
+    const m = i + 1;
+    at(T_M(m) + .25, w => SFX.pop(w, .18, 700));
+    at(T_M(m) + .3, w => SFX.whoosh(w, .55, .1, 1600, 500));
+    at(T_M(m) + .85, w => { SFX.note(w, freq, .2, .4); SFX.click(w, .12, .8); });
+    for (let k = 0; k < 10; k++) at(T_M(m) + .85 + .55 * k / 10, w => SFX.click(w, .05, 1.1));
+  });
+  at(25.5, w => SFX.pop(w, .1, 640));
+  at(25.9, w => SFX.whoosh(w, .9, .15, 2600, 300));
+  at(26.85, w => SFX.zip(w));
+  at(27.05, w => SFX.pop(w, .28, 380));
+
+  // Back in the feed: applied chime, clock ticks
+  at(28.75, w => { SFX.pop(w, .14, 600); SFX.chime(w, [NOTE.E5, NOTE.B5]); });
+  [29.4, 29.6, 29.8].forEach(s => at(s, w => SFX.tick(w, .08, 2400)));
+
+  // Interview envelopes: thud plus a rising note each
+  [NOTE.C5, NOTE.E5, NOTE.G5].forEach((freq, i) => at(31.4 + i * .25 + .7 / 2.75, w => { SFX.thud(w, .3); SFX.note(w + .02, freq, .18, .7, 'sine'); }));
+
+  // End card: letters typing in, then a low closing chord
+  for (let k = 1; k <= 8; k++) at(34.0 + .9 * (1 - Math.cbrt(1 - (k - .5) / 8)), w => SFX.click(w, .13, .9));
+  at(35.1, w => { SFX.note(w, NOTE.C3, .28, 2.2, 'sine'); SFX.note(w, NOTE.G3, .12, 2.2, 'sine'); SFX.note(w + .05, NOTE.C5, .08, 1.8, 'sine'); });
+
+  return cues;
+}
+
+let cues = null;
+function startAudio() {
+  const a = audio();
+  if (a.state === 'suspended') a.resume();
+  if (!cues) cues = buildCues();
+  const base = a.currentTime + .03;
+  cues.forEach(c => c.fn(base + c.t));
+}
+
 // ── Playback and recording ──
 const playBtn = document.getElementById('play');
 const saveBtn = document.getElementById('save');
+const soundBtn = document.getElementById('sound');
 const prog = document.getElementById('prog');
 const statusEl = document.getElementById('status');
 let playing = false, t0 = 0, recorder = null;
@@ -606,19 +767,25 @@ function frame(now) {
   }
   requestAnimationFrame(frame);
 }
-function play() {
+// withSound is false only for the automatic first play: browsers block audio
+// until the viewer clicks something.
+function play(withSound) {
   playing = true;
+  if (withSound) startAudio();
   t0 = performance.now();
   playBtn.textContent = 'Playing';
   playBtn.disabled = true;
   requestAnimationFrame(frame);
 }
 function saveVideo() {
-  const types = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+  const types = ['video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'];
   const type = window.MediaRecorder && types.find(m => MediaRecorder.isTypeSupported(m));
   if (!type) { statusEl.textContent = 'This browser cannot record video. Try Chrome or Edge.'; return; }
+  audio();
+  if (ac.state === 'suspended') ac.resume();
+  const stream = new MediaStream([...canvas.captureStream(60).getVideoTracks(), ...recDest.stream.getAudioTracks()]);
   const chunks = [];
-  recorder = new MediaRecorder(canvas.captureStream(60), { mimeType: type, videoBitsPerSecond: 12000000 });
+  recorder = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 12000000, audioBitsPerSecond: 192000 });
   recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
   recorder.onstop = () => {
     const ext = type.startsWith('video/mp4') ? 'mp4' : 'webm';
@@ -630,17 +797,25 @@ function saveVideo() {
     saveBtn.disabled = false;
   };
   saveBtn.disabled = true;
-  statusEl.textContent = 'Recording. Keep this tab in front for 38 seconds.';
+  statusEl.textContent = soundOn
+    ? 'Recording with sound. Keep this tab in front for 38 seconds.'
+    : 'Recording without sound (Sound is off). Keep this tab in front for 38 seconds.';
   recorder.start();
-  play();
+  play(true);
 }
-playBtn.addEventListener('click', play);
+playBtn.addEventListener('click', () => play(true));
 saveBtn.addEventListener('click', saveVideo);
+soundBtn.addEventListener('click', () => {
+  soundOn = !soundOn;
+  soundBtn.textContent = 'Sound: ' + (soundOn ? 'on' : 'off');
+  soundBtn.setAttribute('aria-pressed', String(soundOn));
+  if (master) master.gain.setTargetAtTime(soundOn ? MASTER_VOL : 0, ac.currentTime, .02);
+});
 
 Promise.all([
   document.fonts.load(`800 40px Unbounded`), document.fonts.load(`600 40px Unbounded`),
   document.fonts.load(`400 20px 'JetBrains Mono'`), document.fonts.load(`500 20px 'JetBrains Mono'`),
-]).catch(() => {}).finally(() => { render(22.6); play(); });
+]).catch(() => {}).finally(() => { render(22.6); play(false); });
 </script>
 </body>
 </html>
