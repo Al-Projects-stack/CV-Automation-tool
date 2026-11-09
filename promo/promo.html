@@ -336,8 +336,7 @@ function scene5(t) { // 19.8 – 24s: end card
   const bw = ctx.measureText('apply.py').width;
   let x = W / 2 - bw / 2;
   for (const ch of 'apply.py') { text(ch, x, 480, { font, color: ch === '.' ? C.amber : C.text }); ctx.font = font; x += ctx.measureText(ch).width; }
-  text('apply-py.onrender.com', W / 2, 590, { font: `500 40px ${FM}`, color: C.amber, align: 'center', alpha: easeOut(seg(t, 20.4, 21)) });
-  text('Free. Sign in with Google.', W / 2, 660, { font: `400 30px ${FM}`, color: C.muted, align: 'center', alpha: easeOut(seg(t, 20.8, 21.4)) });
+  text('Free. Sign in with Google.', W / 2, 600, { font: `400 34px ${FM}`, color: C.muted, align: 'center', alpha: easeOut(seg(t, 20.5, 21.1)) });
   ctx.restore();
 }
 
