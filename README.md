@@ -1,6 +1,6 @@
 # apply.py
 CV Generation, Automated
-<img width="974" height="621" alt="image" src="https://github.com/user-attachments/assets/e9880c4b-c218-439a-bb3b-4bae4740823d" />
+<img width="974" alt="apply.py landing page: a job ad with highlighted requirements, each wired to the CV line that answers it" src="docs/screenshot-landing.png" />
 
 
 Live on this url- https://apply-py.onrender.com/_
