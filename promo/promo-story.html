@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>apply.py story promo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #080809; --line: #251a0c; --text: #f5f0e8; --muted: #7a6a58; --amber: #f59e0b; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1rem; padding: 1.25rem 16px;
+  }
+  .frame { height: min(80vh, 960px); max-width: 100%; aspect-ratio: 9 / 16; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .bar { width: min(100%, 540px); display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+  button {
+    font: inherit; font-size: .8rem; color: var(--text); background: transparent;
+    border: 1px solid var(--line); border-radius: 8px; padding: .5rem 1rem; cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--amber); color: var(--amber); }
+  button:disabled { opacity: .5; cursor: default; }
+  .progress { flex: 1; min-width: 100px; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .progress i { display: block; height: 100%; width: 0; background: var(--amber); }
+  .status { width: 100%; font-size: .72rem; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="frame"><canvas id="c" width="1080" height="1920" aria-label="apply.py story promo animation"></canvas></div>
+  <div class="bar">
+    <button id="play" type="button">Play</button>
+    <button id="save" type="button">Save as video</button>
+    <div class="progress"><i id="prog"></i></div>
+    <span class="status" id="status">38s · 1080×1920 · vertical</span>
+  </div>
+
+<script>
+const W = 1080, H = 1920, DURATION = 38.5;
+const C = {
+  bg: '#080809', card: '#110e08', line: '#251a0c', text: '#f5f0e8', muted: '#7a6a58', amber: '#f59e0b', green: '#00ff88',
+  paper: '#fbfaf7', ink: '#1c1c1c', navy: '#1A5276', rule: '#AED6F1', hl: '#fde3b8',
+  phone: '#0f0f11', tile: '#18181b', ui: '#f2f2f2', ui2: '#a1a1aa', ui3: '#71717a',
+};
+const FD = "'Unbounded', sans-serif", FM = "'JetBrains Mono', monospace", FP = 'Arial, Helvetica, sans-serif', FU = FP;
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+// ── Timing ──
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const easeOut = p => 1 - Math.pow(1 - p, 3);
+const easeIn = p => p * p * p;
+const easeInOut = p => (p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+const easeOutBack = p => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
+const easeOutBounce = p => {
+  const n = 7.5625, d = 2.75;
+  if (p < 1 / d) return n * p * p;
+  if (p < 2 / d) return n * (p -= 1.5 / d) * p + .75;
+  if (p < 2.5 / d) return n * (p -= 2.25 / d) * p + .9375;
+  return n * (p -= 2.625 / d) * p + .984375;
+};
+const life = (t, a, b, din = .4, dout = .4) => Math.min(easeOut(seg(t, a, a + din)), 1 - easeOut(seg(t, b - dout, b)));
+const fmtClock = m => { m = ((m % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+
+// ── Drawing helpers ──
+function text(s, x, y, { font, color, align = 'left', alpha = 1 }) {
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  ctx.fillText(s, x, y);
+  ctx.restore();
+}
+function wrap(s, font, maxW) {
+  ctx.font = font;
+  const lines = []; let cur = '';
+  for (const w of s.split(' ')) {
+    const test = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; } else cur = test;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function spaced(s, x, y, opts, spacing) { ctx.save(); ctx.letterSpacing = spacing; text(s, x, y, opts); ctx.restore(); }
+function brand(x, y, size, { shown = 8, alpha = 1 } = {}) {
+  const s = 'apply.py', font = `800 ${size}px ${FD}`;
+  ctx.font = font;
+  let cx = x - ctx.measureText(s).width / 2;
+  for (let i = 0; i < shown; i++) {
+    text(s[i], cx, y, { font, color: s[i] === '.' ? C.amber : C.text, alpha });
+    ctx.font = font; cx += ctx.measureText(s[i]).width;
+  }
+}
+function touch(x, y, a, ripple = 0) {
+  ctx.save();
+  if (a > 0) { ctx.globalAlpha *= a * .5; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(x, y, 44, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+  if (ripple > 0 && ripple < 1) {
+    ctx.save(); ctx.globalAlpha *= (1 - ripple) * .7; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(x, y, 44 + ripple * 90, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+  }
+}
+function statusBar(clock) {
+  text(clock, 64, 64, { font: `700 34px ${FU}`, color: C.ui });
+  ctx.fillStyle = C.ui;
+  for (let i = 0; i < 4; i++) ctx.fillRect(W - 232 + i * 16, 64 - (i + 1) * 7, 10, (i + 1) * 7);
+  ctx.strokeStyle = C.ui; ctx.lineWidth = 3; rrect(W - 140, 38, 62, 30, 7); ctx.stroke();
+  ctx.fillRect(W - 74, 47, 5, 12); ctx.fillRect(W - 135, 43, 40, 20);
+}
+function envelope(x, y, w, h, rot, label, yes) {
+  ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.rotate(rot);
+  ctx.fillStyle = yes ? C.paper : '#e6dfd3'; rrect(-w / 2, -h / 2, w, h, 8); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(-w / 2 + 6, -h / 2 + 6); ctx.lineTo(0, -h * .02); ctx.lineTo(w / 2 - 6, -h / 2 + 6); ctx.stroke();
+  if (yes) { ctx.fillStyle = C.amber; ctx.beginPath(); ctx.arc(0, -h * .02, h * .08, 0, Math.PI * 2); ctx.fill(); }
+  text(label, 0, h / 2 - h * .14, {
+    font: yes ? `700 ${Math.round(h * .19)}px ${FP}` : `italic 400 ${Math.round(h * .15)}px ${FP}`,
+    color: yes ? C.ink : '#8a7d6b', align: 'center',
+  });
+  ctx.restore();
+}
+
+// ── Content ──
+const AD_PARAS = [
+  'We move 40,000 parcels a day and need someone to keep the data flowing. You will own the {{1:batch pipelines}} behind our reporting, written in {{2:Python and SQL}}.',
+  'You have made a slow job fast before and can show us {{3:the numbers}}. Time with {{4:Airflow}} is a plus.',
+];
+const FEED = [
+  ['Sales Associate', 'Brightway Retail', 'Manchester', '£23k'],
+  ['Junior Accountant', 'Holt & Reed', 'Birmingham', '£28k'],
+  ['Marketing Assistant', 'Fenwick Studio', 'Remote', '£26k'],
+  ['Warehouse Supervisor', 'Northgate Depot', 'Bradford', '£31k'],
+  ['Customer Support Agent', 'Tally Telecom', 'Leeds', '£24k'],
+  ['Graduate Analyst', 'Cobalt Insurance', 'York', '£30k'],
+  ['QA Tester', 'Pixelmoor', 'Remote', '£32k'],
+  ['Office Administrator', 'Lumen Dental', 'Sheffield', '£22k'],
+  ['Project Coordinator', 'Arden Build', 'Hull', '£29k'],
+  ['Data Engineer', 'Northwind Freight', 'Leeds, hybrid', '£45k'],
+  ['Store Manager', 'Brightway Retail', 'Wakefield', '£34k'],
+  ['IT Technician', 'Greenfield Academy Trust', 'Leeds', '£27k'],
+];
+const LOGO = ['#f59e0b', '#3fb68b', '#5b8def', '#d4694a', '#c9b458'];
+const TARGET = 9, CARD_H = 210, CARD_GAP = 26, LIST_TOP = 270;
+const CARD_Y0 = LIST_TOP + TARGET * (CARD_H + CARD_GAP);
+const SCROLL_END = CARD_Y0 - 860;
+
+const RESULTS = [
+  ['Free CV templates', 'Pick a layout and fill it in yourself.'],
+  ['CV builder', 'Drag sections around. Download a PDF.'],
+  ['50 CV examples', 'See what other people wrote.'],
+  ['How to write a cover letter', 'A guide. 12 minute read.'],
+  ['apply.py', 'Paste a job ad. Get a CV and cover letter written for it.'],
+];
+
+const SLOTS = [
+  { m: 2, text: 'Developer with two years of Python and SQL work on reporting pipelines.' },
+  { m: 1, bullet: true, text: 'Rebuilt the nightly pipeline that feeds the operations reports.' },
+  { m: 3, bullet: true, text: 'Cut its run time from 3 hours to 40 minutes by partitioning the largest tables.' },
+  { m: 4, bullet: true, text: 'Scheduled and monitored the jobs in Airflow.' },
+];
+const T_M = m => 20.9 + (m - 1) * 1.15;
+
+// ── Scene A (0 – 8.5s): the same CV, sent forty times ──
+function drawMiniCV(x, y, w, h, detailed) {
+  const k = w / 440;
+  ctx.fillStyle = C.paper; rrect(x, y, w, h, 8 * k); ctx.fill();
+  if (detailed) {
+    text('Amara Nwosu', x + w / 2, y + 70, { font: `700 34px ${FP}`, color: C.ink, align: 'center' });
+    text('Graduate', x + w / 2, y + 104, { font: `400 22px ${FP}`, color: C.navy, align: 'center' });
+  } else {
+    ctx.fillStyle = '#c9c9c9'; ctx.fillRect(x + w * .25, y + 44 * k, w * .5, 24 * k);
+  }
+  const top = y + 140 * k;
+  for (let s = 0; s < 3; s++) {
+    ctx.fillStyle = C.rule; ctx.fillRect(x + 36 * k, top + s * 140 * k, w - 72 * k, 3 * k);
+    ctx.fillStyle = '#e2e2e2';
+    [.9, .7, .8].forEach((f, j) => ctx.fillRect(x + 36 * k, top + s * 140 * k + 24 * k + j * 34 * k, (w - 72 * k) * f, 14 * k));
+  }
+}
+const appsAt = t => Math.max(1, Math.round(1 + 39 * Math.pow(seg(t, .8, 4.6), 1.7)));
+const sentAt = k => .8 + 3.8 * Math.pow((k - 1) / 39, 1 / 1.7);
+
+function sceneSameCV(t) {
+  if (t > 8.5) return;
+  ctx.save(); ctx.globalAlpha = 1 - easeOut(seg(t, 7.9, 8.5));
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  const head = easeOut(seg(t, .1, .6));
+  spaced('APPLICATIONS SENT', W / 2, 230, { font: `500 30px ${FM}`, color: C.muted, align: 'center', alpha: head }, '6px');
+  const n = appsAt(t), bump = 1 + .06 * (1 - seg(t, sentAt(n), sentAt(n) + .12));
+  ctx.save(); ctx.translate(W / 2, 400); ctx.scale(bump, bump);
+  text(String(n), 0, 70, { font: `800 230px ${FD}`, color: C.text, align: 'center', alpha: head });
+  ctx.restore();
+  text('One CV, sent to every job.', W / 2, 580, { font: `600 46px ${FD}`, color: C.text, align: 'center', alpha: life(t, .9, 5.1, .4, .3) });
+  text('Most replies start like this.', W / 2, 580, { font: `600 46px ${FD}`, color: C.text, align: 'center', alpha: easeOut(seg(t, 5.3, 5.8)) });
+
+  const pw = 440, ph = 580, px = W / 2 - pw / 2, py = 660;
+  drawMiniCV(px, py, pw, ph, true);
+
+  for (let k = 1; k <= 40; k++) {
+    const q = seg(t, sentAt(k), sentAt(k) + .6);
+    if (q <= 0 || q >= 1) continue;
+    const e = easeIn(q), dir = k % 2 ? 1 : -1;
+    const x = lerp(W / 2, dir > 0 ? W + 180 : -180, e), y = lerp(py + ph / 2, 240 + ((k * 197) % 720), e);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(dir * e * .9); ctx.scale(1 - .5 * e, 1 - .5 * e);
+    drawMiniCV(-110, -145, 220, 290, false);
+    ctx.restore();
+  }
+
+  for (let i = 0; i < 20; i++) {
+    const p = seg(t, 5.0 + i * .1, 5.6 + i * .1);
+    if (p <= 0) continue;
+    const row = Math.floor(i / 4), col = i % 4;
+    const ex = 30 + col * 250 + (row % 2) * 40, ey = 1700 - row * 115;
+    envelope(ex, lerp(-220, ey, easeOutBounce(p)), 220, 140, (((i * 53) % 11) - 5) * .025, 'Unfortunately,', false);
+  }
+  ctx.restore();
+}
+
+// ── Scene B1 (8.4 – 13.4s): scrolling the job feed ──
+function feedCard(job, i, x, y, w, h, { highlight = 0, applied = 0 } = {}) {
+  ctx.fillStyle = C.tile; rrect(x, y, w, h, 28); ctx.fill();
+  if (highlight > 0) { ctx.save(); ctx.globalAlpha *= highlight; ctx.strokeStyle = C.amber; ctx.lineWidth = 5; rrect(x, y, w, h, 28); ctx.stroke(); ctx.restore(); }
+  ctx.fillStyle = LOGO[i % LOGO.length]; rrect(x + 32, y + 46, 116, 116, 24); ctx.fill();
+  text(job[1][0], x + 90, y + 126, { font: `700 56px ${FU}`, color: '#111', align: 'center' });
+  text(job[0], x + 180, y + 92, { font: `700 40px ${FU}`, color: C.ui });
+  text(job[1], x + 180, y + 140, { font: `400 30px ${FU}`, color: C.ui2 });
+  text(job[2] + '  ·  ' + job[3], x + 180, y + 182, { font: `400 27px ${FU}`, color: C.ui3 });
+  if (applied > 0) {
+    ctx.save(); ctx.translate(x + w - 125, y + 70); ctx.scale(applied, applied);
+    ctx.fillStyle = 'rgba(0,255,136,.16)'; rrect(-95, -32, 190, 64, 32); ctx.fill();
+    text('Applied', 0, 11, { font: `700 30px ${FU}`, color: C.green, align: 'center' });
+    ctx.restore();
+  }
+}
+function feedScroll(t) { return SCROLL_END * (1 - Math.pow(1 - seg(t, 9.15, 11.5), 4)); }
+function drawFeed(scroll, velocity, opts = {}) {
+  ctx.fillStyle = C.phone; ctx.fillRect(0, 0, W, H);
+  const passes = Math.abs(velocity) > 3
+    ? [[scroll - velocity * 3, .07], [scroll - velocity * 2, .1], [scroll - velocity, .16], [scroll, 1]]
+    : [[scroll, 1]];
+  passes.forEach(([s, a]) => {
+    ctx.save(); ctx.globalAlpha *= a;
+    FEED.forEach((job, i) => {
+      const y = LIST_TOP + i * (CARD_H + CARD_GAP) - s;
+      if (y > H || y + CARD_H < 200) return;
+      feedCard(job, i, 50, y, 980, CARD_H, i === TARGET ? opts : {});
+    });
+    ctx.restore();
+  });
+  ctx.fillStyle = C.phone; ctx.fillRect(0, 0, W, 240);
+  text('Jobs', 60, 200, { font: `700 60px ${FU}`, color: C.ui });
+  ctx.strokeStyle = C.ui; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.arc(W - 100, 168, 24, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W - 82, 186); ctx.lineTo(W - 62, 206); ctx.stroke();
+}
+function drawAdFull(a) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  text('Data Engineer', 60, 300, { font: `700 76px ${FU}`, color: C.ui });
+  text('Northwind Freight  ·  Leeds, hybrid  ·  £45k', 60, 365, { font: `400 34px ${FU}`, color: C.ui2 });
+  let y = 480;
+  AD_PARAS.map(p => p.replace(/\{\{\d+:([^}]+)\}\}/g, '$1')).forEach(p => {
+    wrap(p, `400 40px ${FU}`, 960).forEach(l => { text(l, 60, y, { font: `400 40px ${FU}`, color: '#d4d4d8' }); y += 62; });
+    y += 30;
+  });
+  ctx.fillStyle = C.ui; rrect(60, 1690, 960, 130, 65); ctx.fill();
+  text('Apply', W / 2, 1772, { font: `700 44px ${FU}`, color: '#111', align: 'center' });
+  ctx.restore();
+}
+function sceneFeed(t) {
+  if (t < 8.4 || t > 13.4) return;
+  ctx.save(); ctx.globalAlpha = easeOut(seg(t, 8.4, 8.9)) * (1 - easeOut(seg(t, 13.0, 13.4)));
+  const scroll = feedScroll(t);
+  drawFeed(scroll, scroll - feedScroll(t - .035), { highlight: easeOut(seg(t, 11.75, 12.0)) });
+  // Finger drags up to flick the feed, then lifts off.
+  const dragP = seg(t, 9.0, 9.35);
+  const dragA = t < 9.0 ? 0 : t <= 9.35 ? 1 : 1 - seg(t, 9.35, 9.55);
+  touch(W / 2 + 140, 1500 - 520 * easeOut(dragP), dragA);
+  const cardY = CARD_Y0 - scroll;
+  touch(W / 2, cardY + CARD_H / 2, life(t, 11.6, 12.1, .1, .2), seg(t, 11.7, 12.25));
+  const e = easeInOut(seg(t, 12.05, 12.6));
+  if (e > 0) {
+    ctx.fillStyle = '#141416'; rrect(lerp(50, 0, e), lerp(cardY, 100, e), lerp(980, W, e), lerp(CARD_H, H - 100, e), lerp(28, 0, e)); ctx.fill();
+    drawAdFull(easeOut(seg(t, 12.4, 12.8)));
+    touch(W / 2, 1755, life(t, 12.75, 13.15, .1, .2), seg(t, 12.85, 13.3));
+  }
+  statusBar('23:41');
+  ctx.restore();
+}
+
+// ── Scene B2 (13.0 – 16.4s): stuck on the CV at midnight ──
+function sceneEditor(t) {
+  if (t < 13.0 || t > 16.4) return;
+  ctx.save(); ctx.globalAlpha = life(t, 13.0, 16.4, .4, .35);
+  ctx.fillStyle = '#1b1b1d'; ctx.fillRect(0, 0, W, H);
+  const mins = 23 * 60 + 41 + Math.round(49 * easeInOut(seg(t, 15.25, 15.85)));
+  const flip = 1 + .08 * Math.sin(Math.PI * seg(t, 15.25, 15.85));
+  ctx.save(); ctx.translate(W / 2, 330); ctx.scale(flip, flip);
+  text(fmtClock(mins), 0, 60, { font: `800 160px ${FD}`, color: C.text, align: 'center' });
+  ctx.restore();
+  text('CV_final_v3.docx', W / 2, 470, { font: `400 30px ${FM}`, color: C.muted, align: 'center' });
+  ctx.fillStyle = '#ffffff'; rrect(70, 510, 940, 1290, 10); ctx.fill();
+  text('Amara Nwosu', 140, 630, { font: `700 52px ${FP}`, color: C.ink });
+  spaced('SUMMARY', 140, 730, { font: `700 26px ${FP}`, color: C.navy }, '3px');
+  ctx.fillStyle = C.rule; ctx.fillRect(140, 745, 800, 3);
+  const first = 'Motivated graduate with a passion for tech';
+  let shown;
+  if (t < 14.75) shown = first.slice(0, Math.round(first.length * seg(t, 13.6, 14.6)));
+  else if (t < 15.4) shown = first.slice(0, Math.round(first.length * (1 - seg(t, 14.8, 15.3))));
+  else shown = 'Motivated gr'.slice(0, Math.round(12 * seg(t, 15.5, 16.0)));
+  const font = `400 40px ${FP}`;
+  const lines = shown ? wrap(shown, font, 800) : [''];
+  lines.forEach((l, k) => text(l, 140, 810 + k * 56, { font, color: C.ink }));
+  ctx.font = font;
+  const last = lines[lines.length - 1];
+  if (Math.floor(t * 2.4) % 2 === 0) { ctx.fillStyle = C.ink; ctx.fillRect(140 + ctx.measureText(last).width + 4, 810 + (lines.length - 1) * 56 - 36, 3, 46); }
+  [960, 1160, 1360].forEach((y, s) => {
+    spaced(['EXPERIENCE', 'EDUCATION', 'SKILLS'][s], 140, y, { font: `700 26px ${FP}`, color: C.navy }, '3px');
+    ctx.fillStyle = C.rule; ctx.fillRect(140, y + 15, 800, 3);
+  });
+  statusBar(fmtClock(mins));
+  ctx.restore();
+}
+
+// ── Scene B3 (16.0 – 20.2s): searching for a better way ──
+function sceneSearch(t) {
+  if (t < 16.0 || t > 20.2) return;
+  ctx.save(); ctx.globalAlpha = easeOut(seg(t, 16.0, 16.4));
+  ctx.fillStyle = C.phone; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#1f1f22'; rrect(50, 130, 980, 112, 56); ctx.fill();
+  ctx.strokeStyle = C.ui2; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.arc(112, 182, 18, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(125, 195); ctx.lineTo(140, 210); ctx.stroke();
+  const q = 'make my CV fit a job ad';
+  const typed = q.slice(0, Math.round(q.length * seg(t, 16.4, 17.5)));
+  text(typed, 165, 200, { font: `400 38px ${FU}`, color: C.ui });
+  ctx.font = `400 38px ${FU}`;
+  if (t < 17.7 && Math.floor(t * 2.4) % 2 === 0) { ctx.fillStyle = C.ui; ctx.fillRect(168 + ctx.measureText(typed).width, 168, 3, 44); }
+
+  RESULTS.forEach(([title, desc], i) => {
+    const st = 17.7 + i * .16, p = easeOutBack(seg(t, st, st + .45));
+    if (p <= 0) return;
+    const y = 300 + i * 214 + (1 - p) * 80, isUs = i === RESULTS.length - 1;
+    const press = isUs ? 1 - .03 * Math.sin(Math.PI * seg(t, 18.9, 19.2)) : 1;
+    ctx.save(); ctx.globalAlpha *= clamp(p);
+    ctx.translate(W / 2, y + 95); ctx.scale(press, press); ctx.translate(-W / 2, -(y + 95));
+    ctx.fillStyle = C.tile; rrect(50, y, 980, 190, 24); ctx.fill();
+    if (isUs) {
+      ctx.strokeStyle = C.amber; ctx.lineWidth = 4; rrect(50, y, 980, 190, 24); ctx.stroke();
+      ctx.font = `800 46px ${FD}`;
+      let cx = 100;
+      for (const ch of title) { text(ch, cx, y + 86, { font: `800 46px ${FD}`, color: ch === '.' ? C.amber : C.text }); ctx.font = `800 46px ${FD}`; cx += ctx.measureText(ch).width; }
+      text(desc, 100, y + 145, { font: `400 31px ${FU}`, color: '#d4d4d8' });
+    } else {
+      text(title, 100, y + 84, { font: `700 38px ${FU}`, color: C.ui2 });
+      text(desc, 100, y + 140, { font: `400 30px ${FU}`, color: C.ui3 });
+    }
+    ctx.restore();
+  });
+  const usY = 300 + 4 * 214;
+  touch(W / 2, usY + 95, life(t, 18.8, 19.3, .1, .2), seg(t, 18.9, 19.45));
+  const z = easeInOut(seg(t, 19.25, 20.0));
+  if (z > 0) { ctx.fillStyle = C.bg; rrect(lerp(50, 0, z), lerp(usY, 0, z), lerp(980, W, z), lerp(190, H, z), lerp(24, 0, z)); ctx.fill(); }
+  statusBar('00:30');
+  ctx.restore();
+}
+
+// ── Scene C (19.9 – 28.5s): inside apply.py, the ad's words fly into the CV ──
+function layoutAdTokens(x, y, w) {
+  const pad = 50, inner = w - pad * 2, font = `400 31px ${FM}`, lh = 54;
+  ctx.font = font;
+  const spaceW = ctx.measureText(' ').width;
+  const toks = [];
+  let cy = y + 250;
+  AD_PARAS.forEach(p => {
+    const words = [];
+    let prevSpace = true;
+    p.split(/(\{\{\d+:[^}]+\}\})/).filter(Boolean).forEach(part => {
+      const mm = part.match(/^\{\{(\d+):([^}]+)\}\}$/);
+      const s = mm ? mm[2] : part, m = mm ? Number(mm[1]) : 0;
+      s.split(' ').forEach((wd, k) => { if (wd) words.push({ w: wd, m, glue: k === 0 && !prevSpace && !s.startsWith(' ') }); });
+      prevSpace = s.endsWith(' ');
+    });
+    let cx = 0, lineStart = true;
+    words.forEach(tk => {
+      const wd = ctx.measureText(tk.w).width;
+      const gap = tk.glue || lineStart ? 0 : spaceW;
+      if (!lineStart && cx + gap + wd > inner) { cy += lh; cx = 0; lineStart = true; }
+      const g = lineStart || tk.glue ? 0 : spaceW;
+      toks.push({ ...tk, x: x + pad + cx + g, y: cy, wd });
+      cx += g + wd; lineStart = false;
+    });
+    cy += lh + 20;
+  });
+  return { toks, font, bottom: cy - lh - 20 + pad + 12 };
+}
+function drawAdCard(x, y, w, L, reveal) {
+  const h = L.bottom - y;
+  ctx.fillStyle = C.card; rrect(x, y, w, h, 16); ctx.fill();
+  ctx.strokeStyle = C.line; ctx.lineWidth = 2; rrect(x, y, w, h, 16); ctx.stroke();
+  spaced('JOB AD', x + 50, y + 72, { font: `400 22px ${FM}`, color: C.muted }, '4px');
+  text('Data Engineer', x + 50, y + 148, { font: `700 54px ${FD}`, color: C.text });
+  text('Northwind Freight · Leeds, hybrid', x + 50, y + 198, { font: `400 27px ${FM}`, color: C.muted });
+  L.toks.forEach((tk, i) => {
+    if (!tk.m) return;
+    const p = reveal(tk.m), next = L.toks[i + 1];
+    const right = next && next.m === tk.m && next.y === tk.y ? next.x : tk.x + tk.wd + 6;
+    ctx.save(); ctx.globalAlpha *= .14 + .86 * p; ctx.fillStyle = C.amber; rrect(tk.x - 6, tk.y - 36, right - tk.x + 6, 48, 4); ctx.fill(); ctx.restore();
+  });
+  L.toks.forEach(tk => text(tk.w, tk.x, tk.y, { font: L.font, color: tk.m ? (reveal(tk.m) > .5 ? '#120d06' : C.text) : C.muted }));
+}
+function layoutCV(x, y, w) {
+  const font = `400 27px ${FP}`, lh = 38, inner = w - 112;
+  const out = { heads: [], slots: [], font, lh };
+  let cy = y + 200;
+  out.heads.push({ t: 'Summary', y: cy }); cy += 54;
+  SLOTS.forEach((s, i) => {
+    if (i === 1) { cy += 22; out.heads.push({ t: 'Experience', y: cy }); cy += 54; out.job = cy; cy += 48; }
+    const indent = s.bullet ? 30 : 0;
+    const lines = wrap(s.text, font, inner - indent);
+    out.slots.push({ ...s, x: x + 56 + indent, y: cy, lines, h: lines.length * lh });
+    cy += lines.length * lh + 14;
+  });
+  cy += 22; out.heads.push({ t: 'Skills', y: cy }); cy += 54; out.skills = cy;
+  out.bottom = cy + 46;
+  return out;
+}
+function drawCVPage(x, y, w, L, { typed, hl, skills }) {
+  ctx.fillStyle = C.paper; rrect(x, y, w, L.bottom - y, 8); ctx.fill();
+  text('Amara Nwosu', x + w / 2, y + 92, { font: `700 46px ${FP}`, color: C.ink, align: 'center' });
+  text('Data Engineer', x + w / 2, y + 136, { font: `400 28px ${FP}`, color: C.navy, align: 'center' });
+  L.heads.forEach(hd => {
+    spaced(hd.t.toUpperCase(), x + 56, hd.y, { font: `700 21px ${FP}`, color: C.navy }, '3px');
+    ctx.fillStyle = C.rule; ctx.fillRect(x + 56, hd.y + 12, w - 112, 2);
+  });
+  text('Junior Developer', x + 56, L.job, { font: `700 27px ${FP}`, color: C.ink });
+  ctx.font = `700 27px ${FP}`;
+  text('  ·  LogiTrack  ·  2023 to now', x + 56 + ctx.measureText('Junior Developer').width, L.job, { font: `400 25px ${FP}`, color: C.navy });
+  L.slots.forEach(s => {
+    const a = hl(s);
+    if (a > 0) { ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = C.hl; rrect(x + 40, s.y - 30, w - 80, s.h + 10, 4); ctx.fill(); ctx.restore(); }
+    if (s.bullet) text('•', s.x - 26, s.y, { font: `700 27px ${FP}`, color: C.navy });
+    const n = typed(s);
+    ctx.font = L.font;
+    if (n <= 0) {
+      ctx.fillStyle = '#e4e2dd';
+      s.lines.forEach((ln, k) => ctx.fillRect(s.x, s.y - 18 + k * L.lh, ctx.measureText(ln).width, 16));
+    } else {
+      let left = n;
+      s.lines.forEach((ln, k) => {
+        const part = ln.slice(0, Math.max(0, left)); left -= ln.length + 1;
+        if (part) text(part, s.x, s.y + k * L.lh, { font: L.font, color: C.ink });
+      });
+    }
+  });
+  if (skills > 0) text('Python, SQL, Airflow, BigQuery', x + 56, L.skills, { font: L.font, color: C.ink, alpha: skills });
+  if (skills < 1) { ctx.save(); ctx.globalAlpha *= 1 - skills; ctx.fillStyle = '#e4e2dd'; ctx.fillRect(x + 56, L.skills - 18, 420, 16); ctx.restore(); }
+}
+function drawLetter(x, y, w, h) {
+  ctx.fillStyle = '#f1efe9'; rrect(x, y, w, h, 8); ctx.fill();
+  text('Dear Hiring Manager,', x + 56, y + 110, { font: `400 30px ${FP}`, color: C.ink });
+  ctx.fillStyle = '#dddad3';
+  for (let i = 0; i < 12; i++) ctx.fillRect(x + 56, y + 160 + i * 44, (w - 112) * [.95, .9, .97, .6][i % 4], 14);
+}
+function drawZip(cx, cy, s) {
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s);
+  ctx.fillStyle = C.amber; rrect(-120, -150, 240, 300, 20); ctx.fill();
+  ctx.fillStyle = '#120d06';
+  for (let i = 0; i < 7; i++) ctx.fillRect(i % 2 ? -4 : -18, -150 + i * 22, 22, 12);
+  rrect(-24, 8, 48, 40, 6); ctx.fill();
+  text('ZIP', 0, 120, { font: `800 46px ${FD}`, color: '#120d06', align: 'center' });
+  ctx.restore();
+}
+function sceneApply(t) {
+  if (t < 19.9 || t > 28.5) return;
+  ctx.save(); ctx.globalAlpha = life(t, 19.9, 28.5, .25, .35);
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  brand(W / 2, 180, 44, { alpha: easeOut(seg(t, 20.0, 20.4)) });
+
+  const ax = 60, ay = 230, aw = 960;
+  const AL = layoutAdTokens(ax, ay, aw);
+  const cx = 60, cy = AL.bottom + 50, cw = 960;
+  const CL = layoutCV(cx, cy, cw);
+  const pb = easeInOut(seg(t, 25.9, 26.8)), zp = easeInOut(seg(t, 26.8, 27.3));
+  const reveal = m => easeOut(seg(t, T_M(m), T_M(m) + .3));
+
+  ctx.save(); ctx.globalAlpha *= easeOut(seg(t, 20.0, 20.5)) * (1 - pb);
+  drawAdCard(ax, ay + (1 - easeOut(seg(t, 20.0, 20.5))) * 30, aw, AL, reveal);
+  ctx.restore();
+
+  const ccx = W / 2, ccy = (cy + CL.bottom) / 2;
+  const scale = lerp(1, .8, pb) * lerp(1, .2, zp);
+  ctx.save();
+  ctx.globalAlpha *= easeOut(seg(t, 20.2, 20.7)) * (1 - zp);
+  ctx.translate(ccx, lerp(ccy, H / 2 + 40, pb)); ctx.scale(scale, scale); ctx.rotate(-.04 * zp); ctx.translate(-ccx, -ccy);
+  if (pb > 0) {
+    ctx.save(); ctx.translate(ccx, ccy); ctx.rotate(.07 * pb); ctx.translate(-ccx + 90 * pb, -ccy - 90 * pb);
+    drawLetter(cx, cy, cw, CL.bottom - cy);
+    ctx.restore();
+  }
+  drawCVPage(cx, cy + (1 - easeOut(seg(t, 20.2, 20.7))) * 40, cw, CL, {
+    typed: s => Math.round(s.text.length * seg(t, T_M(s.m) + .8, T_M(s.m) + 1.4)),
+    hl: s => easeOut(seg(t, T_M(s.m) + .8, T_M(s.m) + 1.0)) * (1 - easeOut(seg(t, 25.9, 26.4))),
+    skills: easeOut(seg(t, 25.5, 25.8)),
+  });
+  ctx.restore();
+
+  // Requirement chips fly from the ad into their CV line.
+  [1, 2, 3, 4].forEach(m => {
+    const q = easeInOut(seg(t, T_M(m) + .25, T_M(m) + .85));
+    if (q <= 0 || q >= 1) return;
+    const mt = AL.toks.filter(k => k.m === m), slot = CL.slots.find(s => s.m === m);
+    const phrase = mt.map(k => k.w).join(' ');
+    ctx.font = AL.font;
+    const chipW = ctx.measureText(phrase).width + 28;
+    const x0 = mt[0].x + chipW / 2 - 14, y0 = mt[0].y - 12;
+    const x2 = slot.x + chipW / 2, y2 = slot.y - 10;
+    const x1 = W - 90, y1 = (y0 + y2) / 2;
+    const px = (1 - q) * (1 - q) * x0 + 2 * (1 - q) * q * x1 + q * q * x2;
+    const py = (1 - q) * (1 - q) * y0 + 2 * (1 - q) * q * y1 + q * q * y2;
+    const sc = 1 + .22 * Math.sin(Math.PI * q);
+    ctx.save(); ctx.translate(px, py); ctx.rotate(.25 * Math.sin(Math.PI * q)); ctx.scale(sc, sc);
+    ctx.fillStyle = C.amber; rrect(-chipW / 2, -28, chipW, 54, 8); ctx.fill();
+    text(phrase, 0, 10, { font: AL.font, color: '#120d06', align: 'center' });
+    ctx.restore();
+  });
+
+  const zpop = easeOutBack(seg(t, 27.0, 27.45));
+  if (zpop > 0) {
+    drawZip(W / 2, H / 2 + 20, zpop);
+    text('Application_Data_Engineer_Northwind.zip', W / 2, H / 2 + 260, { font: `400 30px ${FM}`, color: C.muted, align: 'center', alpha: clamp(zpop) });
+  }
+  statusBar('00:31');
+  ctx.restore();
+}
+
+// ── Scene D (28.2 – 31.1s): back in the feed, applied ──
+function sceneApplied(t) {
+  if (t < 28.2 || t > 31.1) return;
+  ctx.save(); ctx.globalAlpha = life(t, 28.2, 31.1, .4, .4);
+  drawFeed(SCROLL_END, 0);
+  ctx.fillStyle = `rgba(0,0,0,${.65 * easeOut(seg(t, 28.4, 28.8))})`; ctx.fillRect(0, 0, W, H);
+  feedCard(FEED[TARGET], TARGET, 50, CARD_Y0 - SCROLL_END, 980, CARD_H, { highlight: 1, applied: easeOutBack(seg(t, 28.7, 29.2)) });
+  const mins = 30 + Math.round(3 * seg(t, 29.2, 29.8));
+  text(fmtClock(mins), W / 2, 700, { font: `800 170px ${FD}`, color: C.text, align: 'center', alpha: easeOut(seg(t, 28.6, 29.0)) });
+  statusBar(fmtClock(mins));
+  ctx.restore();
+}
+
+// ── Scene E (30.8 – 34.0s): different replies ──
+function sceneInterview(t) {
+  if (t < 30.8 || t > 34.0) return;
+  ctx.save(); ctx.globalAlpha = life(t, 30.8, 34.0, .4, .4);
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  const cap = easeOut(seg(t, 31.0, 31.5));
+  wrap('This time the replies were different.', `600 54px ${FD}`, 900)
+    .forEach((l, k) => text(l, W / 2, 640 + k * 72, { font: `600 54px ${FD}`, color: C.text, align: 'center', alpha: cap }));
+  [0, 1, 2].forEach(i => {
+    const p = seg(t, 31.4 + i * .25, 32.1 + i * .25);
+    if (p <= 0) return;
+    envelope(50 + i * 340, lerp(-300, 920 + (i % 2) * 40, easeOutBounce(p)), 300, 190, (i - 1) * .06, 'Interview', true);
+  });
+  ctx.restore();
+}
+
+// ── Scene F (33.8 – 38.5s): end card ──
+function sceneEnd(t) {
+  if (t < 33.8) return;
+  ctx.save(); ctx.globalAlpha = easeOut(seg(t, 33.8, 34.2));
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  brand(W / 2, 960, 150, { shown: Math.round(8 * easeOut(seg(t, 34.0, 34.9))) });
+  text('Free. Sign in with Google.', W / 2, 1080, { font: `400 40px ${FM}`, color: C.muted, align: 'center', alpha: easeOut(seg(t, 35.1, 35.7)) });
+  ctx.restore();
+}
+
+function render(t) {
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  sceneSameCV(t); sceneFeed(t); sceneEditor(t); sceneSearch(t);
+  sceneApply(t); sceneApplied(t); sceneInterview(t); sceneEnd(t);
+}
+
+// ── Playback and recording ──
+const playBtn = document.getElementById('play');
+const saveBtn = document.getElementById('save');
+const prog = document.getElementById('prog');
+const statusEl = document.getElementById('status');
+let playing = false, t0 = 0, recorder = null;
+
+function frame(now) {
+  if (!playing) return;
+  const t = Math.min((now - t0) / 1000, DURATION);
+  render(t);
+  prog.style.width = (t / DURATION * 100) + '%';
+  if (t >= DURATION) {
+    playing = false;
+    playBtn.textContent = 'Replay';
+    playBtn.disabled = false;
+    if (recorder && recorder.state === 'recording') setTimeout(() => recorder.stop(), 200);
+    return;
+  }
+  requestAnimationFrame(frame);
+}
+function play() {
+  playing = true;
+  t0 = performance.now();
+  playBtn.textContent = 'Playing';
+  playBtn.disabled = true;
+  requestAnimationFrame(frame);
+}
+function saveVideo() {
+  const types = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+  const type = window.MediaRecorder && types.find(m => MediaRecorder.isTypeSupported(m));
+  if (!type) { statusEl.textContent = 'This browser cannot record video. Try Chrome or Edge.'; return; }
+  const chunks = [];
+  recorder = new MediaRecorder(canvas.captureStream(60), { mimeType: type, videoBitsPerSecond: 12000000 });
+  recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  recorder.onstop = () => {
+    const ext = type.startsWith('video/mp4') ? 'mp4' : 'webm';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(chunks, { type: type.split(';')[0] }));
+    a.download = 'apply-py-story.' + ext;
+    document.body.appendChild(a); a.click(); a.remove();
+    statusEl.textContent = 'Saved ' + a.download;
+    saveBtn.disabled = false;
+  };
+  saveBtn.disabled = true;
+  statusEl.textContent = 'Recording. Keep this tab in front for 38 seconds.';
+  recorder.start();
+  play();
+}
+playBtn.addEventListener('click', play);
+saveBtn.addEventListener('click', saveVideo);
+
+Promise.all([
+  document.fonts.load(`800 40px Unbounded`), document.fonts.load(`600 40px Unbounded`),
+  document.fonts.load(`400 20px 'JetBrains Mono'`), document.fonts.load(`500 20px 'JetBrains Mono'`),
+]).catch(() => {}).finally(() => { render(22.6); play(); });
+</script>
+</body>
+</html>
