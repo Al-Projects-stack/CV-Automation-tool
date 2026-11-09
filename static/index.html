@@ -39,7 +39,7 @@
     /* ════════════════════════════════════════
        LANDING
     ════════════════════════════════════════ */
-    #view-login { flex: 1; display: flex; flex-direction: column; }
+    #view-login { flex: 1; display: flex; flex-direction: column; overflow-x: hidden; }
 
     .land-nav {
       display: flex; align-items: center; justify-content: space-between;
@@ -75,19 +75,15 @@
     .google-btn:hover { background: var(--amber); border-color: var(--amber); }
     .hero-note { font-size: .72rem; color: var(--lm); }
 
-    /* Job switcher */
-    .match-tabs { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
-    .match-tab {
-      font-family: var(--fm); font-size: .75rem; padding: .4rem .9rem; border-radius: 100px;
-      border: 1px solid var(--lborder); background: transparent; color: var(--lm); cursor: pointer;
-      transition: color .15s, border-color .15s;
-    }
-    .match-tab:hover { color: var(--lt); border-color: var(--lm); }
-    .match-tab[aria-selected="true"] { background: var(--lt); border-color: var(--lt); color: #120d06; }
-
     /* Stage: job ad, wires, CV */
     .stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(4rem, 9vw, 8.5rem); align-items: start; }
-    .wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
+    .wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; transition: opacity .2s; }
+
+    /* Paper stack: two sheets peek out under the CV */
+    .paper-stack { position: relative; }
+    .paper-stack::before, .paper-stack::after { content: ''; position: absolute; inset: 0; border-radius: 4px; }
+    .paper-stack::before { background: #c4c0b8; transform: translateY(14px) scale(.97); }
+    .paper-stack::after  { background: #dedad2; transform: translateY(7px) scale(.985); }
     .wire { fill: none; stroke: var(--amber); stroke-width: 1.5; opacity: .45; transition: opacity .2s, stroke-width .2s; }
     .wire-end { fill: var(--amber); opacity: .6; transition: opacity .2s; }
     .stage.focus .wire, .stage.focus .wire-end { opacity: .08; }
@@ -131,7 +127,7 @@
 
     @media (max-width: 860px) {
       .land-main { padding-top: 2.5rem; }
-      .stage { grid-template-columns: 1fr; gap: 1.25rem; }
+      .stage { grid-template-columns: 1fr; gap: 1.5rem; }
       .wires { display: none; }
     }
 
@@ -273,12 +269,12 @@
         </div>
       </header>
 
-      <div class="match-tabs" id="match-tabs" role="tablist" aria-label="Example jobs"></div>
-
       <div class="stage" id="stage">
         <article class="ad" id="ad" aria-label="Example job ad"></article>
         <svg class="wires" id="wires" aria-hidden="true"></svg>
-        <article class="paper" id="paper" aria-label="CV written for this ad"></article>
+        <div class="paper-stack">
+          <article class="paper" id="paper" aria-label="CV written for this ad"></article>
+        </div>
       </div>
       <p class="stage-note">Hover or tap a highlighted part of the ad to see the line that answers it.</p>
     </main>
@@ -450,7 +446,7 @@
       },
     ];
 
-    let matchIdx = 0, matchTimer = null, matchBuilt = false, matchUserTook = false;
+    let matchIdx = 0, matchTimer = null, matchBuilt = false, matchPaused = false, matchBusy = false;
 
     function escHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
@@ -473,9 +469,7 @@
         `<div class="cv-name">Amara Nwosu</div><div class="cv-role">${escHtml(job.cv.role)}</div>` +
         `<div class="cv-contact">amara@email.com · Leeds · LinkedIn</div>${cvRows}`;
 
-      document.querySelectorAll('.match-tab').forEach((t, k) => t.setAttribute('aria-selected', k === i ? 'true' : 'false'));
       setMatchFocus(null);
-      drawWires(true);
     }
 
     function drawWires(animate) {
@@ -521,30 +515,45 @@
       stage.querySelectorAll('[data-m]').forEach(el => el.classList.toggle('on', m != null && el.dataset.m === m));
     }
 
-    function takeOver() { matchUserTook = true; stopCvRotation(); }
+    // Top CV slides off the stack, the next one rises, then the wires redraw.
+    function nextMatch() {
+      if (matchPaused || matchBusy || document.hidden || !$('stage').offsetWidth) return;
+      matchBusy = true;
+      const ad = $('ad'), paper = $('paper'), wires = $('wires');
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      wires.style.opacity = '0';
+      ad.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(8px)' }],
+        { duration: reduce ? 1 : 380, easing: 'ease-in', fill: 'forwards' });
+      const leave = paper.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translate(120px,-14px) rotate(8deg)' }],
+        { duration: reduce ? 1 : 400, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+      leave.onfinish = () => {
+        matchIdx = (matchIdx + 1) % MATCH_JOBS.length;
+        renderMatch(matchIdx);
+        ad.getAnimations().forEach(a => a.cancel());
+        paper.getAnimations().forEach(a => a.cancel());
+        ad.animate([{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'none' }],
+          { duration: reduce ? 1 : 500, easing: 'ease-out' });
+        const rise = paper.animate([{ opacity: 0, transform: 'translate(8px,14px) scale(.96)' }, { opacity: 1, transform: 'none' }],
+          { duration: reduce ? 1 : 520, easing: 'cubic-bezier(.1,.8,.2,1)' });
+        rise.onfinish = () => { wires.style.opacity = ''; drawWires(!reduce); matchBusy = false; };
+      };
+    }
 
     // Names kept from the old mockup so showView() needs no changes.
     function startCvRotation() {
       if (!$('stage')) return;
       if (!matchBuilt) {
-        $('match-tabs').innerHTML = MATCH_JOBS.map((j, k) =>
-          `<button type="button" class="match-tab" role="tab" data-i="${k}">${escHtml(j.tab)}</button>`).join('');
-        $('match-tabs').addEventListener('click', e => {
-          const t = e.target.closest('.match-tab');
-          if (!t) return;
-          takeOver();
-          matchIdx = Number(t.dataset.i);
-          renderMatch(matchIdx);
-        });
         const stage = $('stage');
+        // Pause only while pointing at a highlight, so it doesn't swap mid-read.
         stage.addEventListener('mouseover', e => {
           const el = e.target.closest('[data-m]');
-          if (el) { takeOver(); setMatchFocus(el.dataset.m); }
+          matchPaused = !!el;
+          setMatchFocus(el ? el.dataset.m : null);
         });
-        stage.addEventListener('mouseleave', () => setMatchFocus(null));
+        stage.addEventListener('mouseleave', () => { matchPaused = false; setMatchFocus(null); });
         stage.addEventListener('click', e => {
           const el = e.target.closest('[data-m]');
-          takeOver();
+          matchPaused = !!el;
           setMatchFocus(el ? el.dataset.m : null);
         });
         let resizeTimer;
@@ -553,9 +562,8 @@
         matchBuilt = true;
       }
       renderMatch(matchIdx);
-      if (!matchTimer && !matchUserTook) {
-        matchTimer = setInterval(() => { matchIdx = (matchIdx + 1) % MATCH_JOBS.length; renderMatch(matchIdx); }, 8000);
-      }
+      drawWires(true);
+      if (!matchTimer) matchTimer = setInterval(nextMatch, 6500);
     }
 
     function stopCvRotation() {
