@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>apply.py promo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #080809; --line: #251a0c; --text: #f5f0e8; --muted: #7a6a58; --amber: #f59e0b; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1rem; padding: 1.5rem 16px;
+  }
+  .frame { width: min(100%, 1280px); aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .bar { width: min(100%, 1280px); display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+  button {
+    font: inherit; font-size: .8rem; color: var(--text); background: transparent;
+    border: 1px solid var(--line); border-radius: 8px; padding: .5rem 1rem; cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--amber); color: var(--amber); }
+  button:disabled { opacity: .5; cursor: default; }
+  .progress { flex: 1; min-width: 120px; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .progress i { display: block; height: 100%; width: 0; background: var(--amber); }
+  .status { font-size: .75rem; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="frame"><canvas id="c" width="1920" height="1080" aria-label="apply.py promo animation"></canvas></div>
+  <div class="bar">
+    <button id="play" type="button">Play</button>
+    <button id="save" type="button">Save as video</button>
+    <div class="progress"><i id="prog"></i></div>
+    <span class="status" id="status">24s · 1920×1080</span>
+  </div>
+
+<script>
+const W = 1920, H = 1080, DURATION = 24;
+const C = {
+  bg: '#080809', card: '#110e08', line: '#251a0c', text: '#f5f0e8', muted: '#7a6a58', amber: '#f59e0b',
+  paper: '#fbfaf7', ink: '#1c1c1c', navy: '#1A5276', rule: '#AED6F1', strike: '#e5484d', hl: '#fde3b8',
+};
+const FD = "'Unbounded', sans-serif", FM = "'JetBrains Mono', monospace", FP = 'Arial, Helvetica, sans-serif';
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+// ── Timing helpers ──
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const easeOut = p => 1 - Math.pow(1 - p, 3);
+const easeInOut = p => (p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+// Fades in over [a, a+din] and out over [b-dout, b].
+const life = (t, a, b, din = .4, dout = .4) => Math.min(easeOut(seg(t, a, a + din)), 1 - easeOut(seg(t, b - dout, b)));
+
+// ── Drawing helpers ──
+function text(s, x, y, { font, color, align = 'left', alpha = 1 }) {
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  ctx.fillText(s, x, y);
+  ctx.restore();
+}
+function wrap(s, font, maxW) {
+  ctx.font = font;
+  const lines = []; let cur = '';
+  for (const w of s.split(' ')) {
+    const test = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; } else cur = test;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+
+// ── Content ──
+const GENERIC = { name: 'Amara Nwosu', role: 'Graduate', sections: [
+  { h: 'Summary', lines: [{ text: 'Motivated graduate with a passion for technology.', s: 0 }] },
+  { h: 'Experience', lines: [
+    { text: 'Responsible for reporting tasks.', bullet: true, s: 1 },
+    { text: 'Worked on the internal dashboard.', bullet: true, s: 2 },
+    { text: 'Helped staff with IT problems.', bullet: true, s: 3 },
+  ] },
+  { h: 'Skills', lines: [{ text: 'Python, SQL, React, Windows, teamwork', s: 4 }] },
+] };
+
+const AD = {
+  title: 'Data Engineer', co: 'Northwind Freight · Leeds, hybrid',
+  paras: [
+    'We move 40,000 parcels a day and need someone to keep the data flowing. You will own the {{1:batch pipelines}} behind our reporting, written in {{2:Python and SQL}}.',
+    'You have made a slow job fast before and can show us {{3:the numbers}}. Time with {{4:Airflow}} is a plus.',
+  ],
+};
+
+const TAILORED = { name: 'Amara Nwosu', role: 'Data Engineer', sections: [
+  { h: 'Summary', lines: [{ text: 'Developer with two years of Python and SQL work on reporting pipelines.', m: 2 }] },
+  { h: 'Experience', lines: [
+    { text: 'Rebuilt the nightly pipeline that feeds the operations reports.', bullet: true, m: 1 },
+    { text: 'Cut its run time from 3 hours to 40 minutes by partitioning the largest tables.', bullet: true, m: 3 },
+    { text: 'Scheduled and monitored the jobs in Airflow.', bullet: true, m: 4 },
+  ] },
+  { h: 'Skills', lines: [{ text: 'Python, SQL, Airflow, BigQuery' }] },
+] };
+
+// ── CV paper ──
+function layoutPaper(x, y, w, cv) {
+  const pad = 56, inner = w - pad * 2, items = [];
+  let cy = y + pad;
+  items.push({ kind: 'name', y: cy + 40 }); cy += 54;
+  items.push({ kind: 'role', y: cy + 22 }); cy += 34;
+  items.push({ kind: 'contact', y: cy + 16 }); cy += 30;
+  cv.sections.forEach(sec => {
+    cy += 22;
+    items.push({ kind: 'h', text: sec.h, y: cy + 16 }); cy += 36;
+    sec.lines.forEach(ln => {
+      const indent = ln.bullet ? 28 : 0;
+      const lines = wrap(ln.text, `400 22px ${FP}`, inner - indent);
+      items.push({ kind: 'li', ...ln, lines, x: x + pad + indent, bulletX: x + pad, top: cy - 6, h: lines.length * 32 + 8, firstBase: cy + 20 });
+      cy += lines.length * 32 + 6;
+    });
+  });
+  return { items, bottom: cy + pad };
+}
+
+function drawPaper(x, y, w, h, cv, { hl = () => 0, strike = () => 0 } = {}) {
+  const { items } = layoutPaper(x, y, w, cv);
+  ctx.fillStyle = C.paper; rrect(x, y, w, h, 6); ctx.fill();
+  const cx = x + w / 2;
+  items.forEach(it => {
+    if (it.kind === 'name') text(cv.name, cx, it.y, { font: `700 40px ${FP}`, color: C.ink, align: 'center' });
+    else if (it.kind === 'role') text(cv.role, cx, it.y, { font: `400 24px ${FP}`, color: C.navy, align: 'center' });
+    else if (it.kind === 'contact') text('amara@email.com  ·  Leeds  ·  LinkedIn', cx, it.y, { font: `400 17px ${FP}`, color: '#888', align: 'center' });
+    else if (it.kind === 'h') {
+      ctx.save(); ctx.letterSpacing = '2px';
+      text(it.text.toUpperCase(), x + 56, it.y, { font: `700 17px ${FP}`, color: C.navy });
+      ctx.restore();
+      ctx.fillStyle = C.rule; ctx.fillRect(x + 56, it.y + 9, w - 112, 2);
+    } else {
+      const a = hl(it);
+      if (a > 0) { ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = C.hl; rrect(x + 44, it.top, w - 88, it.h, 4); ctx.fill(); ctx.restore(); }
+      if (it.bullet) text('•', it.bulletX + 4, it.firstBase, { font: `700 22px ${FP}`, color: C.navy });
+      const sp = strike(it);
+      it.lines.forEach((l, k) => {
+        const by = it.firstBase + k * 32;
+        text(l, it.x, by, { font: `400 22px ${FP}`, color: C.ink });
+        if (sp > 0) {
+          ctx.font = `400 22px ${FP}`;
+          const lw = ctx.measureText(l).width;
+          ctx.strokeStyle = C.strike; ctx.lineWidth = 3; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(it.x - 4, by - 8); ctx.lineTo(it.x - 4 + (lw + 8) * sp, by - 8); ctx.stroke();
+        }
+      });
+    }
+  });
+  return items;
+}
+
+// ── Job ad card with highlighted requirements ──
+function layoutAd(x, y, w) {
+  const pad = 48, inner = w - pad * 2, font = `400 25px ${FM}`, lh = 44;
+  ctx.font = font;
+  const spaceW = ctx.measureText(' ').width;
+  const toks = [];
+  let cy = y + pad + 150;
+  AD.paras.forEach(p => {
+    const parts = p.split(/(\{\{\d+:[^}]+\}\})/).filter(Boolean);
+    const words = [];
+    let prevSpace = true;
+    parts.forEach(part => {
+      const mm = part.match(/^\{\{(\d+):([^}]+)\}\}$/);
+      const s = mm ? mm[2] : part, m = mm ? Number(mm[1]) : 0;
+      s.split(' ').forEach((wd, k) => { if (wd) words.push({ w: wd, m, glue: k === 0 && !prevSpace && !s.startsWith(' ') }); });
+      prevSpace = s.endsWith(' ');
+    });
+    let cx = 0, lineStart = true;
+    words.forEach(t => {
+      const wd = ctx.measureText(t.w).width;
+      const gap = t.glue || lineStart ? 0 : spaceW;
+      if (!lineStart && cx + gap + wd > inner) { cy += lh; cx = 0; lineStart = true; }
+      const g = lineStart ? 0 : (t.glue ? 0 : spaceW);
+      toks.push({ ...t, x: x + pad + cx + g, y: cy, wd });
+      cx += g + wd; lineStart = false;
+    });
+    cy += lh + 22;
+  });
+  return { toks, bottom: cy - 22 + pad - 14, font };
+}
+
+function drawAd(x, y, w, h, reveal) {
+  const { toks, font } = layoutAd(x, y, w);
+  ctx.fillStyle = C.card; rrect(x, y, w, h, 12); ctx.fill();
+  ctx.strokeStyle = C.line; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
+  ctx.save(); ctx.letterSpacing = '3px';
+  text('JOB AD', x + 48, y + 66, { font: `400 18px ${FM}`, color: C.muted });
+  ctx.restore();
+  text(AD.title, x + 48, y + 118, { font: `700 38px ${FD}`, color: C.text });
+  text(AD.co, x + 48, y + 160, { font: `400 21px ${FM}`, color: C.muted });
+
+  // Mark backgrounds first, joined across the spaces of a multi-word mark.
+  toks.forEach((t, i) => {
+    if (!t.m) return;
+    const p = reveal(t.m);
+    const next = toks[i + 1];
+    const right = next && next.m === t.m && next.y === t.y ? next.x : t.x + t.wd + 5;
+    ctx.fillStyle = C.amber;
+    ctx.save(); ctx.globalAlpha *= .14 + .86 * p; rrect(t.x - 5, t.y - 30, right - t.x + 5, 40, 3); ctx.fill(); ctx.restore();
+  });
+  toks.forEach(t => {
+    const p = t.m ? reveal(t.m) : 0;
+    text(t.w, t.x, t.y, { font, color: t.m ? (p > .5 ? '#120d06' : C.text) : C.muted });
+  });
+  return toks;
+}
+
+function bezierPoint(x1, y1, x2, y2, u) {
+  const dx = (x2 - x1) * .5;
+  const p0 = [x1, y1], p1 = [x1 + dx, y1], p2 = [x2 - dx, y2], p3 = [x2, y2];
+  const v = 1 - u;
+  return [0, 1].map(k => v * v * v * p0[k] + 3 * v * v * u * p1[k] + 3 * v * u * u * p2[k] + u * u * u * p3[k]);
+}
+function drawWire(x1, y1, x2, y2, p) {
+  if (p <= 0) return;
+  ctx.strokeStyle = C.amber; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x1, y1);
+  const n = 60;
+  for (let i = 1; i <= Math.ceil(n * p); i++) { const [px, py] = bezierPoint(x1, y1, x2, y2, Math.min(i / n, p)); ctx.lineTo(px, py); }
+  ctx.stroke();
+  ctx.fillStyle = C.amber;
+  ctx.beginPath(); ctx.arc(x1, y1, 6, 0, Math.PI * 2); ctx.fill();
+  if (p >= 1) { ctx.beginPath(); ctx.arc(x2, y2, 6, 0, Math.PI * 2); ctx.fill(); }
+}
+
+// ── Scenes ──
+function scene1(t) { // 0 – 3.2s: name types in
+  const a = life(t, 0, 3.2, .3, .5);
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const brand = 'apply.py', font = `800 132px ${FD}`;
+  ctx.font = font;
+  const shown = Math.round(brand.length * easeOut(seg(t, .2, 1.1)));
+  let x = W / 2 - ctx.measureText(brand).width / 2;
+  for (let i = 0; i < shown; i++) {
+    text(brand[i], x, 500, { font, color: brand[i] === '.' ? C.amber : C.text });
+    ctx.font = font; x += ctx.measureText(brand[i]).width;
+  }
+  const p = easeOut(seg(t, 1.3, 1.9));
+  text('You found a job you want.', W / 2, 620 + (1 - p) * 20, { font: `400 46px ${FM}`, color: C.muted, align: 'center', alpha: p });
+  ctx.restore();
+}
+
+function scene2(t) { // 3.2 – 7.6s: the generic CV gets struck through
+  if (t < 3.2 || t > 7.6) return;
+  ctx.save(); ctx.globalAlpha = life(t, 3.2, 7.6, .5, .45);
+  text('Most CVs say the same thing to every employer.', W / 2, 160,
+    { font: `600 46px ${FD}`, color: C.text, align: 'center', alpha: easeOut(seg(t, 3.6, 4.2)) });
+  const rise = easeOut(seg(t, 3.2, 3.9));
+  const w = 760, x = W / 2 - w / 2, y = 260 + (1 - rise) * 60;
+  const h = layoutPaper(x, y, w, GENERIC).bottom - y;
+  drawPaper(x, y, w, h, GENERIC, { strike: it => easeInOut(seg(t, 4.6 + it.s * .4, 4.95 + it.s * .4)) });
+  ctx.restore();
+}
+
+const MATCH_AT = m => 9.3 + (m - 1) * 1.2;
+function scene3(t) { // 7.6 – 15.6s: the ad, the tailored CV, and the wires between them
+  if (t < 7.6 || t > 15.6) return;
+  ctx.save(); ctx.globalAlpha = life(t, 7.6, 15.6, .5, .5);
+  text('apply.py reads the ad and answers it, line by line.', W / 2, 130,
+    { font: `600 44px ${FD}`, color: C.text, align: 'center', alpha: easeOut(seg(t, 7.8, 8.4)) });
+
+  const reveal = m => easeOut(seg(t, MATCH_AT(m), MATCH_AT(m) + .35));
+  const ax = 140, ay = 230, aw = 760;
+  const ah = layoutAd(ax, ay, aw).bottom - ay;
+  ctx.save(); ctx.globalAlpha *= easeOut(seg(t, 7.7, 8.3));
+  const toks = drawAd(ax, ay + (1 - easeOut(seg(t, 7.7, 8.3))) * 20, aw, ah, reveal);
+  ctx.restore();
+
+  const pr = easeOut(seg(t, 8.2, 8.9));
+  const px = 1080, py = 200 + (1 - pr) * 50, pw = 700;
+  const ph = layoutPaper(px, py, pw, TAILORED).bottom - py;
+  ctx.save(); ctx.globalAlpha *= pr;
+  const items = drawPaper(px, py, pw, ph, TAILORED, { hl: it => (it.m ? easeOut(seg(t, MATCH_AT(it.m) + .5, MATCH_AT(it.m) + .85)) : 0) });
+  ctx.restore();
+
+  if (pr >= 1) {
+    [1, 2, 3, 4].forEach(m => {
+      const mt = toks.filter(k => k.m === m);
+      const line = items.find(it => it.m === m);
+      if (!mt.length || !line) return;
+      drawWire(ax + aw, mt[0].y - 10, px, line.top + line.h / 2, easeInOut(seg(t, MATCH_AT(m) + .1, MATCH_AT(m) + .7)));
+    });
+  }
+  ctx.restore();
+}
+
+function drawDoc(x, y, w, h, title) {
+  const fold = 60;
+  ctx.fillStyle = C.paper;
+  ctx.beginPath();
+  ctx.moveTo(x, y); ctx.lineTo(x + w - fold, y); ctx.lineTo(x + w, y + fold); ctx.lineTo(x + w, y + h); ctx.lineTo(x, y + h); ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#dedad2';
+  ctx.beginPath(); ctx.moveTo(x + w - fold, y); ctx.lineTo(x + w - fold, y + fold); ctx.lineTo(x + w, y + fold); ctx.closePath(); ctx.fill();
+  text(title, x + 36, y + 76, { font: `700 30px ${FP}`, color: C.navy });
+  ctx.fillStyle = C.rule; ctx.fillRect(x + 36, y + 94, w - 72, 2);
+  ctx.fillStyle = '#e4e4e4';
+  [.9, .75, .82, .6, .88, .7, .5].forEach((f, i) => ctx.fillRect(x + 36, y + 124 + i * 30, (w - 72) * f, 10));
+}
+
+function scene4(t) { // 15.6 – 19.8s: the two Word files
+  if (t < 15.6 || t > 19.8) return;
+  ctx.save(); ctx.globalAlpha = life(t, 15.6, 19.8, .4, .45);
+  const docs = [['CV', 'CV_Data_Engineer_Northwind.docx'], ['Cover letter', 'CoverLetter_Data_Engineer_Northwind.docx']];
+  docs.forEach(([title, file], i) => {
+    const p = easeOut(seg(t, 15.8 + i * .3, 16.5 + i * .3));
+    const w = 340, h = 420, x = W / 2 - 420 + i * 500, y = 250 + (1 - p) * 80;
+    ctx.save(); ctx.globalAlpha *= p;
+    drawDoc(x, y, w, h, title);
+    text(file, x + w / 2, y + h + 50, { font: `400 21px ${FM}`, color: C.muted, align: 'center' });
+    ctx.restore();
+  });
+  text('A CV and a cover letter, as Word files, in under a minute.', W / 2, 870,
+    { font: `600 40px ${FD}`, color: C.text, align: 'center', alpha: easeOut(seg(t, 16.7, 17.3)) });
+  ctx.restore();
+}
+
+function scene5(t) { // 19.8 – 24s: end card
+  if (t < 19.8) return;
+  const p = easeOut(seg(t, 19.9, 20.6));
+  ctx.save(); ctx.globalAlpha = p;
+  const font = `800 120px ${FD}`;
+  ctx.font = font;
+  const bw = ctx.measureText('apply.py').width;
+  let x = W / 2 - bw / 2;
+  for (const ch of 'apply.py') { text(ch, x, 480, { font, color: ch === '.' ? C.amber : C.text }); ctx.font = font; x += ctx.measureText(ch).width; }
+  text('apply-py.onrender.com', W / 2, 590, { font: `500 40px ${FM}`, color: C.amber, align: 'center', alpha: easeOut(seg(t, 20.4, 21)) });
+  text('Free. Sign in with Google.', W / 2, 660, { font: `400 30px ${FM}`, color: C.muted, align: 'center', alpha: easeOut(seg(t, 20.8, 21.4)) });
+  ctx.restore();
+}
+
+function render(t) {
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  scene1(t); scene2(t); scene3(t); scene4(t); scene5(t);
+}
+
+// ── Playback and recording ──
+const playBtn = document.getElementById('play');
+const saveBtn = document.getElementById('save');
+const prog = document.getElementById('prog');
+const statusEl = document.getElementById('status');
+let playing = false, t0 = 0, recorder = null;
+
+function frame(now) {
+  if (!playing) return;
+  const t = Math.min((now - t0) / 1000, DURATION);
+  render(t);
+  prog.style.width = (t / DURATION * 100) + '%';
+  if (t >= DURATION) {
+    playing = false;
+    playBtn.textContent = 'Replay';
+    playBtn.disabled = false;
+    if (recorder && recorder.state === 'recording') setTimeout(() => recorder.stop(), 200);
+    return;
+  }
+  requestAnimationFrame(frame);
+}
+
+function play() {
+  playing = true;
+  t0 = performance.now();
+  playBtn.textContent = 'Playing';
+  playBtn.disabled = true;
+  requestAnimationFrame(frame);
+}
+
+function saveVideo() {
+  const types = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+  const type = window.MediaRecorder && types.find(m => MediaRecorder.isTypeSupported(m));
+  if (!type) { statusEl.textContent = 'This browser cannot record video. Try Chrome or Edge.'; return; }
+  const chunks = [];
+  recorder = new MediaRecorder(canvas.captureStream(60), { mimeType: type, videoBitsPerSecond: 12000000 });
+  recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  recorder.onstop = () => {
+    const ext = type.startsWith('video/mp4') ? 'mp4' : 'webm';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(chunks, { type: type.split(';')[0] }));
+    a.download = 'apply-py-promo.' + ext;
+    document.body.appendChild(a); a.click(); a.remove();
+    statusEl.textContent = 'Saved ' + a.download;
+    saveBtn.disabled = false;
+  };
+  saveBtn.disabled = true;
+  statusEl.textContent = 'Recording. Keep this tab in front for 24 seconds.';
+  recorder.start();
+  play();
+}
+
+playBtn.addEventListener('click', play);
+saveBtn.addEventListener('click', saveVideo);
+
+// Wait for the fonts so the first frame is drawn in Unbounded and JetBrains Mono.
+Promise.all([
+  document.fonts.load(`800 40px Unbounded`), document.fonts.load(`600 40px Unbounded`),
+  document.fonts.load(`400 20px 'JetBrains Mono'`), document.fonts.load(`500 20px 'JetBrains Mono'`),
+]).catch(() => {}).finally(() => { render(22); play(); });
+</script>
+</body>
+</html>
