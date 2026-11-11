@@ -13,7 +13,7 @@ A full-stack web app that takes any job description and generates a tailored CV 
   <img width="360" alt="apply.py promo: someone sends the same CV to forty jobs and gets rejections, finds a job late at night, then uses apply.py to match their CV to the ad and gets interviews" src="docs/promo.gif" />
 </p>
 
-The version with sound and voiceover is [promo/promo-story.html](promo/promo-story.html): open it in Chrome or Edge and press Play.
+
 
 ---
 
